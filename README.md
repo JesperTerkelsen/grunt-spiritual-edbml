@@ -1,4 +1,4 @@
 grunt-spiritual-edbml
 =====================
 
-Compile EDBML to JS via Grunt.
+Compile EDBML to JS.
