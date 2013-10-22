@@ -1,0 +1,16 @@
+{
+  "name": "grunt-spiritual-edbml",
+  "description": "Compiles EDBML to JS",
+  "version": "0.1.00",
+  "dependencies": {
+    "cheerio": "~0.12.3",
+    "esformatter": "0.0.6"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt-contrib-jshint": "~0.6.4",
+    "grunt-traceur": "0.0.1"
+  }
+}

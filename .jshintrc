@@ -1,0 +1,30 @@
+{
+	"browser": false,
+	"esnext": true,
+	"globals": {
+		"module" : true,
+		"require" : true,
+		"exports" : true,
+		"console" : true,
+		"extend" : true,
+		"each" : true,
+		"unique" : true,
+		"Compiler" : true,
+		"FunctionCompiler" : true,
+		"ScriptCompiler" : true,
+		"FunctionResult" : true,
+		"ScriptResult" : true,
+		"Instruction" : true,
+		"Result" : true,
+		"Runner" : true,
+		"Status" : true
+	},
+	"globalstrict": true,
+	"quotmark": false,
+	"smarttabs": true,
+	"trailing": false,
+	"undef": true,
+	"unused": "vars",
+	"sub": true,
+	"evil": true
+}
