@@ -1,10 +1,11 @@
 {
   "name": "grunt-spiritual-edbml",
   "description": "Compiles EDBML to JS",
-  "version": "0.1.00",
+  "version": "0.1.0",
   "dependencies": {
     "cheerio": "~0.12.3",
-    "esformatter": "0.0.6"
+    "esformatter": "0.0.6",
+    "uglify-js": "~2.4.0"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
@@ -12,5 +13,12 @@
     "grunt-contrib-watch": "~0.5.3",
     "grunt-contrib-jshint": "~0.6.4",
     "grunt-traceur": "0.0.1"
-  }
+  },
+  "readme": "Compile EDBML to JS via Grunt.",
+  "readmeFilename": "README.md",
+  "dist": {
+    "shasum": "76dfc48664d329eb1464201ed21d6b8710be15a0"
+  },
+  "_id": "grunt-spiritual-edbml@0.1.0",
+  "_from": "git://github.com/wunderbyte/grunt-spiritual-edbml"
 }

@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 // Source: tasks/build/tasks/src/lib/traceur/runtime.js
 (function(global) {
 if (global.$traceurRuntime) {
@@ -949,10 +949,9 @@ Status.prototype = {
 var FunctionResult = function() {
   var $FunctionResult = ($__createClassNoExtends)({
     constructor: function(body, params) {
-      this.runnable = this._torunnable(body, params);
-      this.type = "function";
+      this.js = this._tojs(body, params);
     },
-    _torunnable: function(body, params) {
+    _tojs: function(body, params) {
       try {
         params = Array.isArray(params) ? params.join(","): "";
         return new Function(params, body).toString();
@@ -972,8 +971,11 @@ var ScriptResult = function($__super) {
   var $__proto = $__getProtoParent($__super);
   var $ScriptResult = ($__createClass)({constructor: function(body, params, inputs) {
       $__superCall(this, $__proto, "constructor", [body, params]);
-      this.inputs = inputs;
-      this.type = "script";
+      if (Object.keys(inputs).length) {
+        this.inputs = inputs;
+      } else {
+        this.inputs = null;
+      }
     }}, {}, $__proto, $__super, true);
   return $ScriptResult;
 }(FunctionResult);

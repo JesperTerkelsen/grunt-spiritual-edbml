@@ -4,7 +4,10 @@ class ScriptResult extends FunctionResult {
 
 	constructor ( body, params, inputs ) {
 		super ( body, params );
-		this.inputs = inputs;
-		this.type = "script";
+		if ( Object.keys ( inputs ).length ) {
+			this.inputs = inputs;
+		} else {
+			this.inputs = null;
+		}
 	}
 }

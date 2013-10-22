@@ -7,17 +7,16 @@ class FunctionResult {
 	 * @param {Array<String>} params
 	 */
 	constructor ( body, params ) {
-		this.runnable = this._torunnable ( body, params );
-		this.type = "function";
+		this.js = this._tojs ( body, params );
 	}
 
 	/**
-	 * Parse function source to runnable function.
+	 * Parse to function source.
 	 * @throws {Error}
 	 * @param {String} script
 	 * @param @optional (Array<String>} params
 	 */
-	_torunnable ( body, params ) {
+	_tojs ( body, params ) {
 		try {
 			params = Array.isArray ( params ) ? params.join ( "," ) : "";
 			return new Function ( params, body ).toString ();
