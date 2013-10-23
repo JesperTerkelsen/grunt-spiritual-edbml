@@ -1,5 +1,5 @@
 "use strict";
-// Source: tasks/build/tasks/src/lib/traceur/runtime.js
+// Source: build/src/lib/traceur/runtime.js
 (function(global) {
 if (global.$traceurRuntime) {
     return;
@@ -364,7 +364,7 @@ if (global.$traceurRuntime) {
 
 
 
-// Source: tasks/build/tasks/src/header.js
+// Source: build/src/header.js
 function extend(proto, props) {
   var resolved = Object.create(null);
   Object.keys(props).forEach(function(prop) {
@@ -389,7 +389,7 @@ function unique() {
 
 
 
-// Source: tasks/build/tasks/src/compilers/Compiler.js
+// Source: build/src/compilers/Compiler.js
 var $__getDescriptors = function(object) {
   var descriptors = {}, name, names = Object.getOwnPropertyNames(object);
   for (var i = 0; i < names.length; i++) {
@@ -627,7 +627,7 @@ Compiler._ATTREXP = /^[^\d][a-zA-Z0-9-_\.]+/;
 
 
 
-// Source: tasks/build/tasks/src/compilers/FunctionCompiler.js
+// Source: build/src/compilers/FunctionCompiler.js
 var $__getProtoParent = function(superClass) {
   if (typeof superClass === 'function') {
     var prototype = superClass.prototype;
@@ -741,7 +741,7 @@ FunctionCompiler._NESTEXP = /<script.*type=["']?text\/edbml["']?.*>([\s\S]+?)/g;
 
 
 
-// Source: tasks/build/tasks/src/compilers/ScriptCompiler.js
+// Source: build/src/compilers/ScriptCompiler.js
 var $__superDescriptor = function(proto, name) {
   if (!proto) throw new TypeError('super is null');
   return Object.getPropertyDescriptor(proto, name);
@@ -793,7 +793,7 @@ var ScriptCompiler = function($__super) {
 
 
 
-// Source: tasks/build/tasks/src/helpers/Instruction.js
+// Source: build/src/helpers/Instruction.js
 function Instruction(pi) {
   this.atts = Object.create(null);
   this.type = pi.split("<?")[1].split(" ")[0];
@@ -825,7 +825,7 @@ Instruction._ATEXP = /(\S+)=["']?((?:.(?!["']?\s+(?:\S+)=|[>"']))+.)["']?/g;
 
 
 
-// Source: tasks/build/tasks/src/helpers/Runner.js
+// Source: build/src/helpers/Runner.js
 function Runner() {}
 Runner.prototype = {
   firstline: false,
@@ -885,7 +885,7 @@ Runner.prototype = {
 
 
 
-// Source: tasks/build/tasks/src/helpers/Result.js
+// Source: build/src/helpers/Result.js
 function Result(body) {
   this.body = body || "";
 }
@@ -902,7 +902,7 @@ Result.format = function(body) {
 
 
 
-// Source: tasks/build/tasks/src/helpers/Status.js
+// Source: build/src/helpers/Status.js
 function Status() {
   this.conf = [];
 }
@@ -945,7 +945,7 @@ Status.prototype = {
 
 
 
-// Source: tasks/build/tasks/src/results/FunctionResult.js
+// Source: build/src/results/FunctionResult.js
 var FunctionResult = function() {
   var $FunctionResult = ($__createClassNoExtends)({
     constructor: function(body, params) {
@@ -966,7 +966,7 @@ var FunctionResult = function() {
 
 
 
-// Source: tasks/build/tasks/src/results/ScriptResult.js
+// Source: build/src/results/ScriptResult.js
 var ScriptResult = function($__super) {
   var $__proto = $__getProtoParent($__super);
   var $ScriptResult = ($__createClass)({constructor: function(body, params, inputs) {
@@ -982,7 +982,7 @@ var ScriptResult = function($__super) {
 
 
 
-// Source: tasks/build/tasks/src/footer.js
+// Source: build/src/footer.js
 exports.compile = function(edbml, options) {
   if (options.script) {
     return new ScriptCompiler().compile(edbml);

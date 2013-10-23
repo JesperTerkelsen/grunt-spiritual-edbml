@@ -1,2 +1,2 @@
-tasks/build/*
+build/*
 node_modules/*
