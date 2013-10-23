@@ -29,7 +29,7 @@ module.exports = function ( grunt ) {
       },
       custom: {
         files:{
-          "tasks/build/": [ "tasks/src/**/*.js" ]
+          "build/": [ "src/**/*.js" ]
         }
       },
     },
@@ -58,7 +58,7 @@ module.exports = function ( grunt ) {
 					"results/ScriptResult.js",
 					"footer.js"
 				].map ( function ( src ) {
-					return "tasks/build/tasks/src/" + src;
+					return "build/src/" + src;
 				})
 			}
 		},

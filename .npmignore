@@ -1,4 +1,3 @@
-tasks/src/*
-tasks/build/*
-Gruntfile.js,
-build.json
+src/*
+build/*
+Gruntfile.js
