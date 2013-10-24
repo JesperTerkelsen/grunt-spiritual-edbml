@@ -51,8 +51,10 @@ module.exports = function ( grunt ) {
 			Object.keys ( files ).forEach ( function ( target ) {
 				var sources = grunt.file.expand ( files [ target ]);
 				var results = trawloutline ( sources, options );
-				grunt.file.write ( target, beautify ( results ));
-				grunt.log.writeln ( "Generated " + target );
+				if ( results.length ) {
+					grunt.file.write ( target, beautify ( results ));
+					grunt.log.writeln ( "Generated " + target );
+				}
 			});
 		} else {
 			grunt.log.error ( "Object expected" );
