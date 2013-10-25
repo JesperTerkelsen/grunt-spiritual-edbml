@@ -11,7 +11,7 @@ function Instruction ( pi ) {
 	var hit, atexp = Instruction._ATEXP;
 	while (( hit = atexp.exec ( pi ))) {
 		var n = hit [ 1 ], v = hit [ 2 ];
-		this.atts [ n ] = v; // gui.Type.cast ( v );
+		this.atts [ n ] = cast ( v );
 	}
 }
 

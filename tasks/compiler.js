@@ -386,6 +386,26 @@ function unique() {
   var ran = String(Math.random());
   return "key" + ran.slice(2, 11);
 }
+function cast(string) {
+  var result = String(string);
+  switch (result) {
+    case "null":
+      result = null;
+      break;
+    case "true":
+    case "false":
+      result = (result === "true");
+      break;
+    default:
+      if (String(parseInt(result, 10)) === result) {
+        result = parseInt(result, 10);
+      } else if (String(parseFloat(result)) === result) {
+        result = parseFloat(result);
+      }
+      break;
+  }
+  return result === "" ? true: result;
+}
 
 
 
@@ -578,7 +598,7 @@ var Compiler = function() {
         name = attr.exec(rest)[0];
         if (name) {
           result.body += rest.replace(name, "att['" + name + "']");
-          status.skip = rest.length;
+          status.skip = rest.length + 1;
         } else {
           throw "Bad @name: " + rest;
         }
@@ -670,10 +690,7 @@ var FunctionCompiler = function($__super) {
       this.sequence.forEach(function(step) {
         this.source = this[step](this.source, head);
       }, this);
-      return this._result(this.source, this._params);
-    },
-    _result: function(body, params) {
-      return new FunctionResult(body, params);
+      return new Output(this.source, this._params, this._instructions);
     },
     _validate: function(script) {
       if (FunctionCompiler._NESTEXP.test(script)) {
@@ -686,6 +703,8 @@ var FunctionCompiler = function($__super) {
     },
     _extract: function(script, head) {
       Instruction.from (script).forEach(function(pi) {
+        this._instructions = this._instructions || [];
+        this._instructions.push(pi);
         this._instruct(pi);
       }, this);
       return Instruction.clean(script);
@@ -760,8 +779,8 @@ var ScriptCompiler = function($__super) {
       this.inputs = Object.create(null);
       $__superCall(this, $__proto, "constructor", []);
     },
-    _result: function(body, params) {
-      return new ScriptResult(body, params, this.inputs);
+    _result: function(body, params, instructions) {
+      return new ScriptResult(body, params, instructions, this.inputs);
     },
     _instruct: function(pi) {
       $__superCall(this, $__proto, "_instruct", [pi]);
@@ -800,7 +819,7 @@ function Instruction(pi) {
   var hit, atexp = Instruction._ATEXP;
   while ((hit = atexp.exec(pi))) {
     var n = hit[1], v = hit[2];
-    this.atts[n] = v;
+    this.atts[n] = cast(v);
   }
 }
 Instruction.prototype = {
@@ -945,11 +964,12 @@ Status.prototype = {
 
 
 
-// Source: build/src/results/FunctionResult.js
-var FunctionResult = function() {
-  var $FunctionResult = ($__createClassNoExtends)({
-    constructor: function(body, params) {
+// Source: build/src/helpers/Output.js
+var Output = function() {
+  var $Output = ($__createClassNoExtends)({
+    constructor: function(body, params, instructions) {
       this.js = this._tojs(body, params);
+      this.instructions = instructions;
     },
     _tojs: function(body, params) {
       try {
@@ -961,24 +981,8 @@ var FunctionResult = function() {
       }
     }
   }, {});
-  return $FunctionResult;
+  return $Output;
 }();
-
-
-
-// Source: build/src/results/ScriptResult.js
-var ScriptResult = function($__super) {
-  var $__proto = $__getProtoParent($__super);
-  var $ScriptResult = ($__createClass)({constructor: function(body, params, inputs) {
-      $__superCall(this, $__proto, "constructor", [body, params]);
-      if (Object.keys(inputs).length) {
-        this.inputs = inputs;
-      } else {
-        this.inputs = null;
-      }
-    }}, {}, $__proto, $__super, true);
-  return $ScriptResult;
-}(FunctionResult);
 
 
 

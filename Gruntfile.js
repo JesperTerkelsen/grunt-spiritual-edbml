@@ -54,8 +54,9 @@ module.exports = function ( grunt ) {
 					"helpers/Runner.js",
 					"helpers/Result.js",
 					"helpers/Status.js",
-					"results/FunctionResult.js",
-					"results/ScriptResult.js",
+					"helpers/Output.js",
+					//"results/FunctionResult.js",
+					//"results/ScriptResult.js",
 					"footer.js"
 				].map ( function ( src ) {
 					return "build/src/" + src;

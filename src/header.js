@@ -40,3 +40,31 @@ function unique () {
 	var ran = String ( Math.random ());
 	return "key" + ran.slice ( 2, 11 );
 }
+
+/**
+ * Autocast string to an inferred type. "123" returns a number 
+ * while "true" and false" return a boolean. Empty string evals 
+ * to `true` in order to support HTML attribute minimization.
+ * @param {String} string
+ * @returns {object}
+ */
+function cast ( string ) {
+	var result = String ( string );
+	switch ( result ) {
+		case "null" :
+			result = null;
+			break;
+		case "true" :
+		case "false" :
+			result = ( result === "true" );
+			break;
+		default :
+			if ( String ( parseInt ( result, 10 )) === result ) {
+				result = parseInt ( result, 10 );
+			} else if ( String ( parseFloat ( result )) === result ) {
+				result = parseFloat ( result );
+			}
+			break;	
+	}
+	return result === "" ? true : result;
+}

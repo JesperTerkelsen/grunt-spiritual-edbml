@@ -44,7 +44,7 @@ class FunctionCompiler extends Compiler {
 		];
 
 		/**
-		 * Script processing intstructions.
+		 * Processing intstructions.
 		 * @type {Array<Instruction>}
 		 */
 		this._instructions = null;
@@ -74,7 +74,6 @@ class FunctionCompiler extends Compiler {
 		this.dependencies = [];
 		this._params = [];
 		this._vars = [];
-		//var result = null;
 		var head = {
 			declarations : {}, // Map<String,boolean>
 			functiondefs : [] // Array<String>
@@ -82,16 +81,19 @@ class FunctionCompiler extends Compiler {
 		this.sequence.forEach ( function ( step ) {
 			this.source = this [ step ] ( this.source, head );
 		}, this );
-		return this._result ( this.source, this._params );
+		return new Output ( this.source, this._params, this._instructions );
 	}
 
 
 	// PRIVATE ..............................................................................
 	
-
-	_result ( body, params ) {
-		return new FunctionResult ( body, params );
+	/**
+	 * Isolated for subclass to overwrite.
+	 *
+	_result ( body, params, instructions ) {
+		return new FunctionResult ( body, params, instructions );
 	}
+	*/
 
 	/**
 	 * Confirm no nested EDBML scripts because it's not parsable in the browser.
@@ -125,6 +127,8 @@ class FunctionCompiler extends Compiler {
 	 */
 	_extract ( script, head ) {
 		Instruction.from ( script ).forEach ( function ( pi ) {
+			this._instructions = this._instructions || [];
+			this._instructions.push ( pi );
 			this._instruct ( pi );
 		}, this );
 		return Instruction.clean ( script );

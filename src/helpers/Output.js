@@ -1,13 +1,18 @@
 "use strict";
 
-class FunctionResult {
+/**
+ * @TODO: rename
+ */
+class Output {
 
 	/**
 	 * @param {String} body
 	 * @param {Array<String>} params
+	 * @param {Array<Instruction>} instructions
 	 */
-	constructor ( body, params ) {
+	constructor ( body, params, instructions ) {
 		this.js = this._tojs ( body, params );
+		this.instructions = instructions;
 	}
 
 	/**

@@ -20,10 +20,10 @@ class ScriptCompiler extends FunctionCompiler {
 	// Private ...............................................................
 
 	/**
-	 *
+	 * @overwrites {FunctionCompiler#_result}
 	 */
-	_result ( body, params ) {
-		return new ScriptResult ( body, params, this.inputs );
+	_result ( body, params, instructions ) {
+		return new ScriptResult ( body, params, instructions, this.inputs );
 	}
 
 	/**
