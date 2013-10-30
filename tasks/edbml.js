@@ -51,8 +51,10 @@ module.exports = function ( grunt ) {
 			Object.keys ( files ).forEach ( function ( target ) {
 				var sources = grunt.file.expand ( files [ target ]);
 				var results = trawloutline ( sources, options );
-				grunt.file.write ( target, beautify ( results ));
-				grunt.log.writeln ( "Generated " + target );
+				if ( results.length ) {
+					grunt.file.write ( target, beautify ( results ));
+					grunt.log.writeln ( "Generated " + target );
+				}
 			});
 		} else {
 			grunt.log.error ( "Object expected" );
@@ -60,7 +62,7 @@ module.exports = function ( grunt ) {
 	}
 
 	/**
-	 * @returns {Array<FunctionResult>}
+	 * @returns {Array<Output>}
 	 * @returns {String}
 	 */
 	function trawloutline ( sources ) {
@@ -126,9 +128,9 @@ module.exports = function ( grunt ) {
 	function convertinline ( script, options, key ) {
 		var js, dirs = directives ( script, { script : true });
 		var result = compiler.compile ( script.html (), dirs );
-		var inputs = result.inputs;
+		var pis = result.instructions;
 		js = named ( result.js, key );
-		js += inputs ? key + ".$input = " + JSON.stringify ( inputs ) + ";" : "";
+		js += pis ? key + ".$instructions = " + JSON.stringify ( pis ) + ";" : "";
 		js = options.beautify ? beautify ( js, true ) : uglify ( js );
 		script.html ( placeholder ( key )).
 			addClass ( "gui-script" ).
@@ -203,11 +205,18 @@ module.exports = function ( grunt ) {
 	 */
 	function declare ( name, result ) {
 		var runner = named ( result.js );
-		var inputs = result.inputs;
+		var pis = result.instructions;
 		var output = "gui.Object.assert ( \"" + name + "\", " + runner + ");";
+		/*
+		var inputs = result.inputs;
 		if ( inputs ) {
 			inputs = JSON.stringify ( inputs );
 			output += "gui.Object.assert ( \"" + name + ".$input\", " + inputs + ");";
+		}
+		*/
+		if ( pis ) {
+			pis = JSON.stringify ( pis );
+			output += "gui.Object.assert ( \"" + name + ".$instructions\", " + pis + ");";	
 		}
 		return output;
 	}

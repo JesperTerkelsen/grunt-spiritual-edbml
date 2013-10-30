@@ -240,7 +240,7 @@ class Compiler {
 			name = attr.exec ( rest )[ 0 ];
 			if ( name ) {
 				result.body += rest.replace ( name, "att['" + name + "']" );
-				status.skip = rest.length;
+				status.skip = rest.length + 1;
 			} else {
 				throw "Bad @name: " + rest;
 			}
