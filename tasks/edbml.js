@@ -3,6 +3,7 @@ var beautyfier = require ( "esformatter" );
 var uglifier = require ( "uglify-js" );
 var compiler = require ( "./compiler" );
 var shorthash = require ( "./shorthash" );
+var path = require ( "path" );
 
 /**
  * Here it comes.
@@ -11,6 +12,28 @@ var shorthash = require ( "./shorthash" );
 module.exports = function ( grunt ) {
 
 	"use strict";
+
+	/**
+	 * Match something that can be used as a function or variable name.
+	 * http://stackoverflow.com/questions/2008279/validate-a-javascript-function-name/2008444#2008444
+	 * @type {RegExp}
+	 */
+	var IDENTIFIER = /^[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*$/;
+
+	/**
+	 * Flip to abort file system updates.
+	 * @type {boolean}
+	 */
+	var errors = false;
+
+	/**
+	 * Throw up.
+	 * @param {String} message
+	 */
+	function error ( message ) {
+		grunt.log.error ( message );
+		errors = true;
+	}
 
 	/**
 	 * Genereate hash for file name.
@@ -25,6 +48,7 @@ module.exports = function ( grunt ) {
 	 * Yeah.
 	 */
 	grunt.registerMultiTask ( "edbml", "Trawl EDBML", function () {
+		errors = false;
 		var options = this.options ();
 		if ( options.inline ) {
 			processinline ( this.data.src, options );
@@ -42,11 +66,13 @@ module.exports = function ( grunt ) {
 		if ( Array.isArray ( files )) {
 			var sources = grunt.file.expand ( files );
 			var results = trawlinline ( sources, options );
-			Object.keys ( results ).forEach ( function ( src ) {
-				var file = rename ( src, options );
-				grunt.file.write ( file, results [ src ]);
-				grunt.log.writeln ( "Generated " + file );
-			});
+			if ( !errors ) {
+				Object.keys ( results ).forEach ( function ( src ) {
+					var file = rename ( src, options );
+					grunt.file.write ( file, results [ src ]);
+					grunt.log.writeln ( "Generated " + file );
+				});
+			}
 		} else {
 			grunt.log.error ( "Array expected" );
 		}
@@ -62,7 +88,7 @@ module.exports = function ( grunt ) {
 			Object.keys ( files ).forEach ( function ( target ) {
 				var sources = grunt.file.expand ( files [ target ]);
 				var results = trawloutline ( sources, options );
-				if ( results.length ) {
+				if ( results.length && !errors ) {
 					grunt.file.write ( target, beautify ( results ));
 					grunt.log.writeln ( "Generated " + target );
 				}
@@ -79,17 +105,46 @@ module.exports = function ( grunt ) {
 	function trawloutline ( sources ) {
 		var results = [];
 		sources.forEach ( function ( src ) {
-			src = grunt.file.read ( src );
-			var $ = cheerio.load ( src );
-			$ ( "script" ).each ( function ( i, script ) {
-				script = $ ( script );
-				var key = unique ( src, i );
-				if ( script.attr ( "id" )) {
-					results.push ( parse ( script, key ));
-				}
+			var $ = cheerio.load ( grunt.file.read ( src ));
+			getscripts ( $, src ).each ( function ( i, script ) {
+				results.push ( parse ( $ ( script ), unique ( src, i )));
 			});
 		});
 		return results.join ( "\n\n" );
+	}
+
+	/**
+	 * @returns {$}
+	 */
+	function getscripts ( $, src ) {
+		var scripts = $ ( "script" );
+		if ( scripts.length === 1 ) {
+			var name, script = $ ( scripts [ 0 ]);
+			if ( !script.attr ( "id" )) {
+				name = path.basename ( src );
+				if ( validname ( name )) {
+					script.attr ( "id", name );
+				} else {
+					error ( "File name unfit for declaration as a JS object: " + name );	
+				}
+			}
+		} else {
+			if ( !Array.every ( scripts, function ( script ) {
+				return $ ( script ).attr ( "id" );
+			})) {
+				error ( "ID required when multiples script in file: " + src );
+			}
+		}
+		return scripts;
+	}
+
+	/**
+	 * @param {String} name
+	 * @returns {boolean}
+	 */
+	function validname ( name ) {
+		name = name.replace ( /\./g, "" );
+		return name.match ( IDENTIFIER ) ? true : false;
 	}
 
 	/**
@@ -111,12 +166,13 @@ module.exports = function ( grunt ) {
 						holders [ key ] = convertinline ( 
 							script, options, key, tab
 						);
-						//console.log ( script );
 					}
 				}
 			});
 			if ( Object.keys ( holders ).length ) {
 				results [ src ] = resolve ( $.html (), holders );
+			} else {
+				results [ src ] = $.html ();
 			}
 		});
 		return results;
@@ -236,13 +292,6 @@ module.exports = function ( grunt ) {
 		var runner = named ( result.js );
 		var pis = result.instructions;
 		var output = "gui.Object.assert ( \"" + name + "\", " + runner + ");";
-		/*
-		var inputs = result.inputs;
-		if ( inputs ) {
-			inputs = JSON.stringify ( inputs );
-			output += "gui.Object.assert ( \"" + name + ".$input\", " + inputs + ");";
-		}
-		*/
 		if ( pis ) {
 			pis = JSON.stringify ( pis );
 			output += "gui.Object.assert ( \"" + name + ".$instructions\", " + pis + ");";	
@@ -257,7 +306,21 @@ module.exports = function ( grunt ) {
 	 */
 	function beautify ( js, tab, buffer ) {
 		tab = tab || "";
-		js = beautyfier.format ( js, {
+		js = beautyfier.format ( js, beautyoptions ());
+		js = js.split ( "\n" ).filter ( function ( line, i ) {
+			return line.trim ().length;
+		}).map ( function ( line ) {
+			return tab + line;
+		}).join ( "\n" );
+		return buffer ? "\n" + js + "\n" + tab : js;
+	}
+
+	/**
+	 * ES formatter options. Work in progress.
+	 * @returns {object}
+	 */
+	function beautyoptions () {
+		return {
 			preset : "default",
 			indent : {
 				value : "\t",
@@ -268,19 +331,8 @@ module.exports = function ( grunt ) {
 				before : {
 					VariableName : 0
 				}
-			},
-			whiteSpace : {
-				before : {
-					VariableName : 0
-				}
 			}
-		});
-		js = js.split ( "\n" ).filter ( function ( line, i ) {
-			return line.trim ().length;
-		}).map ( function ( line ) {
-			return tab + line;
-		}).join ( "\n" );
-		return buffer ? "\n" + js + "\n" + tab : js;
+		};
 	}
 
 	/**
@@ -324,16 +376,6 @@ module.exports = function ( grunt ) {
 		}
 		return result === "" ? true : result;
 	}
-
-	/**
-	 * Generate probable unique key.
-	 * @returns {String}
-	 *
-	function unique () {
-		var ran = String ( Math.random ());
-		return "key" + ran.slice ( 2, 11 );
-	}
-	*/
 
 	/**
 	 * Change extension of file and return new path.
