@@ -426,7 +426,10 @@ var $__getDescriptors = function(object) {
 };
 var Compiler = function() {
   var $Compiler = ($__createClassNoExtends)({
-    constructor: function() {},
+    constructor: function(key) {
+      this.uniqueid = key;
+      this.keyindex = 0;
+    },
     newline: function(line, runner, status, result) {
       status.last = line.length - 1;
       status.adds = line[0] === "+";
@@ -468,7 +471,7 @@ var Compiler = function() {
     _compile: function(script) {
       var runner = new Runner();
       var status = new Status();
-      var result = new Result('"use strict";\n');
+      var result = new Result("'use strict';\n");
       runner.run(this, script, status, result);
       result.body += (status.ishtml() ? "';": "") + "\nreturn out.write ();";
       return result.format();
@@ -629,7 +632,7 @@ var Compiler = function() {
       this._inject(status, result, Compiler._GEEK);
     },
     _inject: function(status, result, js) {
-      var body = result.body, temp = result.temp, spot = status.spot, prev = body.substring(0, spot), next = body.substring(spot), name = unique();
+      var body = result.body, temp = result.temp, spot = status.spot, prev = body.substring(0, spot), next = body.substring(spot), name = this.uniqueid + (this.keyindex++);
       result.body = prev + "\n" + js.outline.replace("$name", name).replace("$temp", temp) + next + js.inline.replace("$name", name);
     }
   }, {});
@@ -648,7 +651,17 @@ Compiler._ATTREXP = /^[^\d][a-zA-Z0-9-_\.]+/;
 
 
 // Source: build/src/compilers/FunctionCompiler.js
-var $__getProtoParent = function(superClass) {
+var $__superDescriptor = function(proto, name) {
+  if (!proto) throw new TypeError('super is null');
+  return Object.getPropertyDescriptor(proto, name);
+}, $__superCall = function(self, proto, name, args) {
+  var descriptor = $__superDescriptor(proto, name);
+  if (descriptor) {
+    if ('value'in descriptor) return descriptor.value.apply(self, args);
+    if (descriptor.get) return descriptor.get.call(self).apply(self, args);
+  }
+  throw new TypeError("Object has no method '" + name + "'.");
+}, $__getProtoParent = function(superClass) {
   if (typeof superClass === 'function') {
     var prototype = superClass.prototype;
     if (Object(prototype) === prototype || prototype === null) return superClass.prototype;
@@ -668,7 +681,8 @@ var $__getProtoParent = function(superClass) {
 var FunctionCompiler = function($__super) {
   var $__proto = $__getProtoParent($__super);
   var $FunctionCompiler = ($__createClass)({
-    constructor: function() {
+    constructor: function(key) {
+      $__superCall(this, $__proto, "constructor", [key]);
       this.source = null;
       this.dependencies = null;
       this.directives = null;
@@ -761,26 +775,12 @@ FunctionCompiler._NESTEXP = /<script.*type=["']?text\/edbml["']?.*>([\s\S]+?)/g;
 
 
 // Source: build/src/compilers/ScriptCompiler.js
-var $__superDescriptor = function(proto, name) {
-  if (!proto) throw new TypeError('super is null');
-  return Object.getPropertyDescriptor(proto, name);
-}, $__superCall = function(self, proto, name, args) {
-  var descriptor = $__superDescriptor(proto, name);
-  if (descriptor) {
-    if ('value'in descriptor) return descriptor.value.apply(self, args);
-    if (descriptor.get) return descriptor.get.call(self).apply(self, args);
-  }
-  throw new TypeError("Object has no method '" + name + "'.");
-};
 var ScriptCompiler = function($__super) {
   var $__proto = $__getProtoParent($__super);
   var $ScriptCompiler = ($__createClass)({
-    constructor: function() {
+    constructor: function(key) {
       this.inputs = Object.create(null);
-      $__superCall(this, $__proto, "constructor", []);
-    },
-    _result: function(body, params, instructions) {
-      return new ScriptResult(body, params, instructions, this.inputs);
+      $__superCall(this, $__proto, "constructor", [key]);
     },
     _instruct: function(pi) {
       $__superCall(this, $__proto, "_instruct", [pi]);
@@ -987,10 +987,10 @@ var Output = function() {
 
 
 // Source: build/src/footer.js
-exports.compile = function(edbml, options) {
-  if (options.script) {
-    return new ScriptCompiler().compile(edbml);
+exports.compile = function(edbml, options, key) {
+  if (edbml.contains("<?input")) {
+    return new ScriptCompiler(key).compile(edbml, options);
   } else {
-    return new FunctionCompiler().compile(edbml);
+    return new FunctionCompiler(key).compile(edbml, options);
   }
 };
