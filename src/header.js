@@ -33,6 +33,7 @@ function each ( object, func, thisp ) {
 }
 
 /**
+ * @deprecated
  * Generate probable unique key.
  * @returns {String}
  */

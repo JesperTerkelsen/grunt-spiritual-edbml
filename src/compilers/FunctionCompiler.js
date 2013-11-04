@@ -8,9 +8,11 @@
 class FunctionCompiler extends Compiler {
 	
 	/**
-	 * Construction.
+	 * @param {String} key
 	 */
-	constructor () {
+	constructor ( key ) {
+
+		super ( key );
 
 		/**
 		 * Source of compiled function.
@@ -86,14 +88,6 @@ class FunctionCompiler extends Compiler {
 
 
 	// PRIVATE ..............................................................................
-	
-	/**
-	 * Isolated for subclass to overwrite.
-	 *
-	_result ( body, params, instructions ) {
-		return new FunctionResult ( body, params, instructions );
-	}
-	*/
 
 	/**
 	 * Confirm no nested EDBML scripts because it's not parsable in the browser.
@@ -195,21 +189,6 @@ class FunctionCompiler extends Compiler {
 		return html + script;
 	}
 	
-	/**
-	 * Attempt to parse result as function.
-	 * @throws {Error}
-	 * @param {String} script
-	 * @param @optional (Array<String>} params
-	 *
-	_convert ( script, params ) {
-		var args = "";
-		if ( Array.isArray ( params )) {
-			args = params.join ( "," );
-		}
-		new Function ( args, script );
-	}
-	*/
-
 	/**
 	 * Compute full script source (including arguments) for debugging stuff.
 	 * @returns {String}

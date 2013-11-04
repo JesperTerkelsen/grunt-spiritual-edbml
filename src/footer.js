@@ -5,10 +5,10 @@
  * @param {Map<String,object>} options
  * @returns {String}
  */
-exports.compile = function ( edbml, options ) {
-	if ( options.script ) {
-		return new ScriptCompiler ().compile ( edbml );
+exports.compile = function ( edbml, options, key ) {
+	if ( edbml.contains ( "<?input" )) {
+		return new ScriptCompiler ( key ).compile ( edbml, options );
 	} else {
-		return new FunctionCompiler ().compile ( edbml );
+		return new FunctionCompiler ( key ).compile ( edbml, options );
 	}
 };

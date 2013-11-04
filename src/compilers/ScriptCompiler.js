@@ -6,25 +6,21 @@
  */
 class ScriptCompiler extends FunctionCompiler {
 
-	constructor () {
+	/**
+	 * @param {String} key
+	 */
+	constructor ( key ) {
 
 		/**
 		 * Observed data types.
 		 * @type {Map<String,String}
 		 */
 		this.inputs = Object.create ( null );	
-		super ();
+		super ( key );
 	}
 	
 
 	// Private ...............................................................
-
-	/**
-	 * @overwrites {FunctionCompiler#_result}
-	 */
-	_result ( body, params, instructions ) {
-		return new ScriptResult ( body, params, instructions, this.inputs );
-	}
 
 	/**
 	 * Handle instruction.

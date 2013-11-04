@@ -1,9 +1,18 @@
 "use strict";
 
 /**
- * Compiler.
+ * Compiler base class just so we can offload 
+ * the worst stringparsing from our subclasses.
  */
 class Compiler {
+
+	/**
+	 * @param {String} key
+	 */
+	constructor ( key ) {
+		this.uniqueid = key;
+		this.keyindex = 0;
+	}
 
 	/**
 	 * Line begins.
@@ -78,7 +87,7 @@ class Compiler {
 	_compile ( script ) {
 		var runner = new Runner (); 
 		var status = new Status ();
-		var result = new Result ( '"use strict";\n' );
+		var result = new Result ( "'use strict';\n" );
 		runner.run ( this, script, status, result );
 		result.body += ( status.ishtml () ? "';" : "" ) + "\nreturn out.write ();";
 		return result.format ();
@@ -301,7 +310,7 @@ class Compiler {
 			spot = status.spot,
 			prev = body.substring ( 0, spot ),
 			next = body.substring ( spot ),
-			name = unique (); //gui.KeyMaster.generateKey ();
+			name = this.uniqueid + ( this.keyindex ++ );
 		result.body = 
 			prev + "\n" + 
 			js.outline.replace ( "$name", name ).replace ( "$temp", temp ) + 
