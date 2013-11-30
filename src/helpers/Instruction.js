@@ -5,27 +5,23 @@
  * @TODO Problem with one-letter variable names in <?input name="a" type="TestData"?>
  * @param {String} pi
  */
-function Instruction ( pi ) {
-	this.atts = Object.create ( null );
-	this.type = pi.split ( "<?" )[ 1 ].split ( " " )[ 0 ]; // TODO: regexp this
-	var hit, atexp = Instruction._ATEXP;
-	while (( hit = atexp.exec ( pi ))) {
-		var n = hit [ 1 ], v = hit [ 2 ];
-		this.atts [ n ] = cast ( v );
+class Instruction {
+
+	/**
+	 * @param {String} pi
+	 */
+	constructor ( pi ) {
+		this.type = null; // instruction type
+		this.atts = null; // instruction attributes
+		this.atts = Object.create ( null );
+		this.type = pi.split ( "<?" )[ 1 ].split ( " " )[ 0 ]; // TODO: regexp this
+		var hit, atexp = Instruction._ATEXP;
+		while (( hit = atexp.exec ( pi ))) {
+			var n = hit [ 1 ], v = hit [ 2 ];
+			this.atts [ n ] = cast ( v );
+		}
 	}
 }
-
-/**
- * Identification.
- * @returns {String}
- */
-Instruction.prototype = {
-	type : null, // instruction type
-	atts : null, // instruction attributes
-	toString : function () {
-		return "[object Instruction]";
-	}
-};
 
 
 // STATICS .............................................................................

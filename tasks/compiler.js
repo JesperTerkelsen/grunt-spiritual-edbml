@@ -1,4 +1,4 @@
-"use strict";
+	"use strict";
 // Source: build/src/lib/traceur/runtime.js
 (function(global) {
 if (global.$traceurRuntime) {

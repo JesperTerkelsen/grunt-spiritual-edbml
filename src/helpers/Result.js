@@ -1,67 +1,33 @@
 "use strict";
 
 /**
- * Collecting compiler result.
- * @param @optional {String} body
+ * Compile to function.
  */
-function Result ( body ) {
-	this.body = body || "";
-}
-
-Result.prototype = {
+class Result {
 
 	/**
-	 * Main result string.
-	 * @type {String}
+	 * @param {String} body
+	 * @param {Array<String>} params
+	 * @param {Array<Instruction>} instructions
 	 */
-	body : null,
-
-	/**
-	 * Temp string buffer.
-	 * @type {String}
-	 */
-	temp : null,
-
-	/**
-	 * Format result for readability.
-	 * @returns {String}
-	 */
-	format : function () {
-		return Result.format ( this.body );
+	constructor ( body, params, instructions ) {
+		this.js = this._tojs ( body, params );
+		this.instructions = instructions;
 	}
-};
 
-/**
- * @deprecated
- * Format JS for readability.
- * @TODO Indent switch cases
- * @TODO Remove blank lines
- * @param {String} body
- * @returns {String}
- */
-Result.format = function ( body ) {
-	return body;
-	/*
-	var result = "",
-		tabs = "\t",
-		init = null,
-		last = null,
-		fixt = null,
-		hack = null;
-	body.split ( "\n" ).forEach ( function ( line ) {
-		line = line.trim ();
-		init = line.charAt ( 0 );
-		last = line.charAt ( line.length - 1 );
-		fixt = line.split ( "//" )[ 0 ].trim ();
-		hack = fixt.charAt ( fixt.length - 1 );
-		if (( init === "}" || init === "]" ) && tabs !== "" ) {				
-			tabs = tabs.slice ( 0, -1 );
+	/**
+	 * Parse to function source.
+	 * @throws {Error}
+	 * @param {String} script
+	 * @param @optional (Array<String>} params
+	 */
+	_tojs ( body, params ) {
+		try {
+			params = Array.isArray ( params ) ? params.join ( "," ) : "";
+			return new Function ( params, body ).toString ();
+		} catch ( exception ) {
+			console.error ( "Source dysfunction", body );
+			console.trace ( exception );
 		}
-		result += tabs + line + "\n";
-		if ( last === "{" || last === "[" || hack === "{" || hack === "[" ) {
-			tabs += "\t";
-		}
-	});
-	return result;
-	*/
-};
+	}
+}
