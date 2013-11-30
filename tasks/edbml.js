@@ -70,7 +70,7 @@ module.exports = function ( grunt ) {
 				Object.keys ( results ).forEach ( function ( src ) {
 					var file = rename ( src, options );
 					grunt.file.write ( file, results [ src ]);
-					grunt.log.writeln ( "Generated " + file );
+					grunt.log.writeln ( "File \"" + file + "\" created." );
 				});
 			}
 		} else {
@@ -129,7 +129,7 @@ module.exports = function ( grunt ) {
 				}
 			}
 		} else {
-			if ( !Array.every ( scripts, function ( script ) {
+			if ( !Array.prototype.every.call ( scripts, function ( script ) {
 				return $ ( script ).attr ( "id" );
 			})) {
 				error ( "ID required when multiples script in file: " + src );
