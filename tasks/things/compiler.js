@@ -365,26 +365,10 @@ if (global.$traceurRuntime) {
 
 
 // Source: build/src/header.js
-function extend(proto, props) {
-  var resolved = Object.create(null);
-  Object.keys(props).forEach(function(prop) {
-    resolved[prop] = {
-      value: props[prop],
-      writable: true,
-      enumerable: true,
-      configurable: true
-    };
-  });
-  return Object.create(proto, resolved);
-}
 function each(object, func, thisp) {
-  return Object.keys(object).map(function(key) {
+  return Object.keys(object).map((function(key) {
     return func.call(thisp, key, object[key]);
-  });
-}
-function unique() {
-  var ran = String(Math.random());
-  return "key" + ran.slice(2, 11);
+  }));
 }
 function cast(string) {
   var result = String(string);
@@ -430,40 +414,40 @@ var Compiler = function() {
       this.uniqueid = key;
       this.keyindex = 0;
     },
-    newline: function(line, runner, status, result) {
+    newline: function(line, runner, status, output) {
       status.last = line.length - 1;
       status.adds = line[0] === "+";
       status.cont = status.cont || (status.ishtml() && status.adds);
     },
-    endline: function(line, runner, status, result) {
+    endline: function(line, runner, status, output) {
       if (status.ishtml()) {
         if (!status.cont) {
-          result.body += "';\n";
+          output.body += "';\n";
           status.gojs();
         }
       } else {
-        result.body += "\n";
+        output.body += "\n";
       }
       status.cont = false;
     },
-    nextchar: function(c, runner, status, result) {
+    nextchar: function(c, runner, status, output) {
       switch (status.mode) {
         case Status.MODE_JS:
-          this._compilejs(c, runner, status, result);
+          this._compilejs(c, runner, status, output);
           break;
         case Status.MODE_HTML:
-          this._compilehtml(c, runner, status, result);
+          this._compilehtml(c, runner, status, output);
           break;
         case Status.MODE_TAG:
-          this._compiletag(c, runner, status, result);
+          this._compiletag(c, runner, status, output);
           break;
       }
       if (status.skip-- <= 0) {
         if (status.poke || status.geek) {
-          result.temp += c;
+          output.temp += c;
         } else {
           if (!status.istag()) {
-            result.body += c;
+            output.body += c;
           }
         }
       }
@@ -471,12 +455,12 @@ var Compiler = function() {
     _compile: function(script) {
       var runner = new Runner();
       var status = new Status();
-      var result = new Result("'use strict';\n");
-      runner.run(this, script, status, result);
-      result.body += (status.ishtml() ? "';": "") + "\nreturn out.write ();";
-      return result.format();
+      var output = new Output("'use strict';\n");
+      runner.run(this, script, status, output);
+      output.body += (status.ishtml() ? "';": "") + "\nreturn out.write ();";
+      return output.body;
     },
-    _compilejs: function(c, runner, status, result) {
+    _compilejs: function(c, runner, status, output) {
       switch (c) {
         case "<":
           if (runner.firstchar) {
@@ -491,17 +475,17 @@ var Compiler = function() {
               this._bbb(status);
             } else {
               status.gohtml();
-              status.spot = result.body.length - 1;
-              result.body += "out.html += '";
+              status.spot = output.body.length - 1;
+              output.body += "out.html += '";
             }
           }
           break;
         case "@":
-          this._scriptatt(runner, status, result);
+          this._scriptatt(runner, status, output);
           break;
       }
     },
-    _compilehtml: function(c, runner, status, result) {
+    _compilehtml: function(c, runner, status, output) {
       var special = status.peek || status.poke || status.geek;
       switch (c) {
         case "{":
@@ -515,20 +499,20 @@ var Compiler = function() {
               status.peek = false;
               status.skip = 1;
               status.curl = 0;
-              result.body += ") + '";
+              output.body += ") + '";
             }
             if (status.poke) {
-              this._poke(status, result);
+              this._poke(status, output);
               status.poke = false;
-              result.temp = null;
+              output.temp = null;
               status.spot = - 1;
               status.skip = 1;
               status.curl = 0;
             }
             if (status.geek) {
-              this._geek(status, result);
+              this._geek(status, output);
               status.geek = false;
-              result.temp = null;
+              output.temp = null;
               status.spot = - 1;
               status.skip = 1;
               status.curl = 0;
@@ -541,12 +525,12 @@ var Compiler = function() {
               status.geek = true;
               status.skip = 2;
               status.curl = 0;
-              result.temp = "";
+              output.temp = "";
             } else {
               status.peek = true;
               status.skip = 2;
               status.curl = 0;
-              result.body += "' + (";
+              output.body += "' + (";
             }
           }
           break;
@@ -555,7 +539,7 @@ var Compiler = function() {
             status.poke = true;
             status.skip = 2;
             status.curl = 0;
-            result.temp = "";
+            output.temp = "";
           }
           break;
         case "+":
@@ -568,11 +552,11 @@ var Compiler = function() {
           break;
         case "'":
           if (!special) {
-            result.body += "\\";
+            output.body += "\\";
           }
           break;
         case "@":
-          this._htmlatt(runner, status, result);
+          this._htmlatt(runner, status, output);
           break;
       }
     },
@@ -590,50 +574,50 @@ var Compiler = function() {
           break;
       }
     },
-    _scriptatt: function(runner, status, result) {
+    _scriptatt: function(runner, status, output) {
       var attr = Compiler._ATTREXP;
       var rest, name;
       if (runner.behind("@")) {} else if (runner.ahead("@")) {
-        result.body += "var att = new Att ();";
+        output.body += "var att = new Att ();";
         status.skip = 2;
       } else {
         rest = runner.lineahead();
         name = attr.exec(rest)[0];
         if (name) {
-          result.body += rest.replace(name, "att['" + name + "']");
+          output.body += rest.replace(name, "att['" + name + "']");
           status.skip = rest.length + 1;
         } else {
           throw "Bad @name: " + rest;
         }
       }
     },
-    _htmlatt: function(runner, status, result) {
+    _htmlatt: function(runner, status, output) {
       var attr = Compiler._ATTREXP;
       var rest, name, dels, what;
       if (runner.behind("@")) {} else if (runner.behind("#{")) {
         console.error("todo");
       } else if (runner.ahead("@")) {
-        result.body += "' + att._all () + '";
+        output.body += "' + att._all () + '";
         status.skip = 2;
       } else {
         rest = runner.lineahead();
         name = attr.exec(rest)[0];
         dels = runner.behind("-");
         what = dels ? "att._pop": "att._out";
-        result.body = dels ? result.body.substring(0, result.body.length - 1): result.body;
-        result.body += "' + " + what + " ( '" + name + "' ) + '";
+        output.body = dels ? output.body.substring(0, output.body.length - 1): output.body;
+        output.body += "' + " + what + " ( '" + name + "' ) + '";
         status.skip = name.length + 1;
       }
     },
-    _poke: function(status, result) {
-      this._inject(status, result, Compiler._POKE);
+    _poke: function(status, output) {
+      this._inject(status, output, Compiler._POKE);
     },
-    _geek: function(status, result) {
-      this._inject(status, result, Compiler._GEEK);
+    _geek: function(status, output) {
+      this._inject(status, output, Compiler._GEEK);
     },
-    _inject: function(status, result, js) {
-      var body = result.body, temp = result.temp, spot = status.spot, prev = body.substring(0, spot), next = body.substring(spot), name = this.uniqueid + (this.keyindex++);
-      result.body = prev + "\n" + js.outline.replace("$name", name).replace("$temp", temp) + next + js.inline.replace("$name", name);
+    _inject: function(status, output, js) {
+      var body = output.body, temp = output.temp, spot = status.spot, prev = body.substring(0, spot), next = body.substring(spot), name = this.uniqueid + (this.keyindex++);
+      output.body = prev + "\n" + js.outline.replace("$name", name).replace("$temp", temp) + next + js.inline.replace("$name", name);
     }
   }, {});
   return $Compiler;
@@ -683,28 +667,23 @@ var FunctionCompiler = function($__super) {
   var $FunctionCompiler = ($__createClass)({
     constructor: function(key) {
       $__superCall(this, $__proto, "constructor", [key]);
-      this.source = null;
-      this.dependencies = null;
-      this.directives = null;
-      this.sequence = ["_validate", "_extract", "_direct", "_declare", "_define", "_compile"];
+      this._sequence = [this._validate, this._extract, this._direct, this._define, this._compile];
+      this._directives = null;
       this._instructions = null;
       this._params = null;
       this._failed = false;
     },
     compile: function(source, directives) {
-      this.directives = directives || {};
-      this.source = source;
-      this.dependencies = [];
+      this._directives = directives || {};
       this._params = [];
-      this._vars = [];
       var head = {
         declarations: {},
         functiondefs: []
       };
-      this.sequence.forEach(function(step) {
-        this.source = this[step](this.source, head);
-      }, this);
-      return new Output(this.source, this._params, this._instructions);
+      source = this._sequence.reduce((function(s, step) {
+        return step.call(this, s, head);
+      }).bind(this), source);
+      return new Result(source, this._params, this._instructions);
     },
     _validate: function(script) {
       if (FunctionCompiler._NESTEXP.test(script)) {
@@ -716,16 +695,16 @@ var FunctionCompiler = function($__super) {
       return script;
     },
     _extract: function(script, head) {
-      Instruction.from (script).forEach(function(pi) {
+      Instruction.from (script).forEach((function(pi) {
         this._instructions = this._instructions || [];
         this._instructions.push(pi);
         this._instruct(pi);
-      }, this);
+      }).bind(this));
       return Instruction.clean(script);
     },
     _instruct: function(pi) {
-      var type = pi.type;
-      var atts = pi.atts;
+      var type = pi.tag;
+      var atts = pi.attributes;
       var name = atts.name;
       switch (type) {
         case "param":
@@ -733,22 +712,11 @@ var FunctionCompiler = function($__super) {
           break;
       }
     },
-    _declare: function(script, head) {
-      var funcs = [];
-      this.dependencies.forEach(function(dep) {
-        head.declarations[dep.name] = true;
-        funcs.push(dep.name + " = get ( self, '" + dep.tempname() + "' );\n");
-      }, this);
-      if (funcs[0]) {
-        head.functiondefs.push("( function functions ( get ) {\n" + funcs.join("") + "}( Function.get ));");
-      }
-      return script;
-    },
     _define: function(script, head) {
       var vars = "", html = "var ";
-      each(head.declarations, function(name) {
+      each(head.declarations, (function(name) {
         vars += ", " + name;
-      });
+      }));
       if (this._params.indexOf("out") < 0) {
         html += "out = new edb.Out (), ";
       }
@@ -756,9 +724,9 @@ var FunctionCompiler = function($__super) {
         html += "att = new edb.Att () ";
       }
       html += vars + ";\n";
-      head.functiondefs.forEach(function(def) {
+      head.functiondefs.forEach((function(def) {
         html += def + "\n";
-      });
+      }));
       return html + script;
     },
     _source: function(source, params) {
@@ -779,23 +747,20 @@ var ScriptCompiler = function($__super) {
   var $__proto = $__getProtoParent($__super);
   var $ScriptCompiler = ($__createClass)({
     constructor: function(key) {
-      this.inputs = Object.create(null);
       $__superCall(this, $__proto, "constructor", [key]);
+      this.inputs = Object.create(null);
+      this._sequence.splice(3, 0, this._declare);
     },
     _instruct: function(pi) {
       $__superCall(this, $__proto, "_instruct", [pi]);
-      var atts = pi.atts;
-      switch (pi.type) {
+      var atts = pi.attributes;
+      switch (pi.tag) {
         case "input":
           this.inputs[atts.name] = atts.type;
           break;
       }
     },
     _declare: function(script, head) {
-      $__superCall(this, $__proto, "_declare", [script, head]);
-      return this._declareinputs(script, head);
-    },
-    _declareinputs: function(script, head) {
       var defs = [];
       each(this.inputs, function(name, type) {
         head.declarations[name] = true;
@@ -813,22 +778,18 @@ var ScriptCompiler = function($__super) {
 
 
 // Source: build/src/helpers/Instruction.js
-function Instruction(pi) {
-  this.atts = Object.create(null);
-  this.type = pi.split("<?")[1].split(" ")[0];
-  var hit, atexp = Instruction._ATEXP;
-  while ((hit = atexp.exec(pi))) {
-    var n = hit[1], v = hit[2];
-    this.atts[n] = cast(v);
-  }
-}
-Instruction.prototype = {
-  type: null,
-  atts: null,
-  toString: function() {
-    return "[object Instruction]";
-  }
-};
+var Instruction = function() {
+  var $Instruction = ($__createClassNoExtends)({constructor: function(pi) {
+      this.tag = pi.split("<?")[1].split(" ")[0];
+      this.attributes = Object.create(null);
+      var hit, atexp = Instruction._ATEXP;
+      while ((hit = atexp.exec(pi))) {
+        var n = hit[1], v = hit[2];
+        this.attributes[n] = cast(v);
+      }
+    }}, {});
+  return $Instruction;
+}();
 Instruction.from = function(source) {
   var pis = [], hit = null;
   while ((hit = this._PIEXP.exec(source))) {
@@ -845,142 +806,172 @@ Instruction._ATEXP = /(\S+)=["']?((?:.(?!["']?\s+(?:\S+)=|[>"']))+.)["']?/g;
 
 
 // Source: build/src/helpers/Runner.js
-function Runner() {}
-Runner.prototype = {
-  firstline: false,
-  lastline: false,
-  firstchar: false,
-  lastchar: false,
-  run: function(compiler, script, status, result) {
-    this._runlines(compiler, script.split("\n"), status, result);
-  },
-  ahead: function(string) {
-    var line = this._line;
-    var index = this._index;
-    var i = index + 1;
-    var l = string.length;
-    return line.length > index + l && line.substring(i, i + l) === string;
-  },
-  behind: function(string) {
-    var line = this._line;
-    var index = this._index;
-    var length = string.length, start = index - length;
-    return start >= 0 && line.substr(start, length) === string;
-  },
-  lineahead: function() {
-    return this._line.substring(this._index + 1);
-  },
-  skipahead: function(string) {
-    console.error("TODO");
-  },
-  _line: null,
-  _index: - 1,
-  _runlines: function(compiler, lines, status, result) {
-    var stop = lines.length - 1;
-    lines.forEach(function(line, index) {
-      this.firstline = index === 0;
-      this.lastline = index === stop;
-      this._runline(line, index, compiler, status, result);
-    }, this);
-  },
-  _runline: function(line, index, compiler, status, result) {
-    line = this._line = line.trim();
-    if (line.length) {
-      compiler.newline(line, this, status, result);
-      this._runchars(compiler, line.split(""), status, result);
-      compiler.endline(line, this, status, result);
+var Runner = function() {
+  var $Runner = ($__createClassNoExtends)({
+    constructor: function() {
+      this.firstline = false;
+      this.lastline = false;
+      this.firstchar = false;
+      this.lastchar = false;
+      this._line = null;
+      this._index = - 1;
+    },
+    run: function(compiler, script, status, output) {
+      this._runlines(compiler, script.split("\n"), status, output);
+    },
+    ahead: function(string) {
+      var line = this._line;
+      var index = this._index;
+      var i = index + 1;
+      var l = string.length;
+      return line.length > index + l && line.substring(i, i + l) === string;
+    },
+    behind: function(string) {
+      var line = this._line;
+      var index = this._index;
+      var length = string.length, start = index - length;
+      return start >= 0 && line.substr(start, length) === string;
+    },
+    lineahead: function() {
+      return this._line.substring(this._index + 1);
+    },
+    skipahead: function(string) {
+      console.error("TODO");
+    },
+    _runlines: function(compiler, lines, status, output) {
+      var stop = lines.length - 1;
+      lines.forEach((function(line, index) {
+        this.firstline = index === 0;
+        this.lastline = index === stop;
+        this._runline(line, index, compiler, status, output);
+      }).bind(this));
+    },
+    _runline: function(line, index, compiler, status, output) {
+      line = this._line = line.trim();
+      if (line.length) {
+        compiler.newline(line, this, status, output);
+        this._runchars(compiler, line.split(""), status, output);
+        compiler.endline(line, this, status, output);
+      }
+    },
+    _runchars: function(compiler, chars, status, output) {
+      var stop = chars.length - 1;
+      chars.forEach((function(c, i) {
+        this._index = i;
+        this.firstchar = i === 0;
+        this.lastchar = i === stop;
+        compiler.nextchar(c, this, status, output);
+      }).bind(this));
     }
-  },
-  _runchars: function(compiler, chars, status, result) {
-    var stop = chars.length - 1;
-    chars.forEach(function(c, i) {
-      this._index = i;
-      this.firstchar = i === 0;
-      this.lastchar = i === stop;
-      compiler.nextchar(c, this, status, result);
-    }, this);
-  }
-};
+  }, {});
+  return $Runner;
+}();
 
 
 
 // Source: build/src/helpers/Result.js
-function Result(body) {
-  this.body = body || "";
-}
-Result.prototype = {
-  body: null,
-  temp: null,
-  format: function() {
-    return Result.format(this.body);
-  }
-};
-Result.format = function(body) {
-  return body;
-};
+var Result = function() {
+  var $Result = ($__createClassNoExtends)({
+    constructor: function(body, params, instructions) {
+      this.functionstring = this._tofunctionstring(body, params);
+      this.instructionset = instructions;
+      this.errormessage = null;
+    },
+    _tofunctionstring: function(body) {
+      var params = arguments[1] !== (void 0) ? arguments[1]: [];
+      try {
+        var js = new Function(params.join(","), body).toString();
+        return js.replace(/^function anonymous/, "function");
+      } catch (exception) {
+        this.instructionset = null;
+        this.errormessage = exception.message;
+        return this._tofallbackstring(body, params, exception.message);
+      }
+    },
+    _tofallbackstring: function(body, params, exception) {
+      body = this._emergencyformat(body, params);
+      body = new Buffer(body).toString("base64");
+      body = "gui.BlobLoader.loadScript ( document, atob (  '" + body + "' ));\n";
+      body += "return '<p class=\"edberror\">" + exception + "</p>'";
+      return this._tofunctionstring(body);
+    },
+    _emergencyformat: function(body, params) {
+      var result = "", tabs = "\t", init = null, last = null, fixt = null, hack = null;
+      body.split("\n").forEach((function(line) {
+        line = line.trim();
+        init = line[0];
+        last = line[line.length - 1];
+        fixt = line.split("//")[0].trim();
+        hack = fixt[fixt.length - 1];
+        if ((init === "}" || init === "]") && tabs !== "") {
+          tabs = tabs.slice(0, - 1);
+        }
+        result += tabs + line + "\n";
+        if (last === "{" || last === "[" || hack === "{" || hack === "[") {
+          tabs += "\t";
+        }
+      }));
+      return ["function dysfunction (" + params + ") {", result, "}"].join("\n");
+    }
+  }, {});
+  return $Result;
+}();
 
 
 
 // Source: build/src/helpers/Status.js
-function Status() {
-  this.conf = [];
-}
+var Status = function() {
+  var $Status = ($__createClassNoExtends)({
+    constructor: function() {
+      this.mode = Status.MODE_JS;
+      this.conf = [];
+      this.peek = false;
+      this.poke = false;
+      this.cont = false;
+      this.adds = false;
+      this.func = null;
+      this.conf = null;
+      this.curl = null;
+      this.skip = 0;
+      this.last = 0;
+      this.spot = 0;
+      this.indx = 0;
+    },
+    gojs: function() {
+      this.mode = Status.MODE_JS;
+    },
+    gohtml: function() {
+      this.mode = Status.MODE_HTML;
+    },
+    gotag: function() {
+      this.mode = Status.MODE_TAG;
+    },
+    isjs: function() {
+      return this.mode === Status.MODE_JS;
+    },
+    ishtml: function() {
+      return this.mode === Status.MODE_HTML;
+    },
+    istag: function() {
+      return this.mode === Status.MODE_TAG;
+    }
+  }, {});
+  return $Status;
+}();
+;
 Status.MODE_JS = "js";
 Status.MODE_HTML = "html";
 Status.MODE_TAG = "tag";
-Status.prototype = {
-  mode: Status.MODE_JS,
-  peek: false,
-  poke: false,
-  cont: false,
-  adds: false,
-  func: null,
-  conf: null,
-  curl: null,
-  skip: 0,
-  last: 0,
-  spot: 0,
-  indx: 0,
-  refs: false,
-  isjs: function() {
-    return this.mode === Status.MODE_JS;
-  },
-  ishtml: function() {
-    return this.mode === Status.MODE_HTML;
-  },
-  istag: function() {
-    return this.mode === Status.MODE_TAG;
-  },
-  gojs: function() {
-    this.mode = Status.MODE_JS;
-  },
-  gohtml: function() {
-    this.mode = Status.MODE_HTML;
-  },
-  gotag: function() {
-    this.mode = Status.MODE_TAG;
-  }
-};
 
 
 
 // Source: build/src/helpers/Output.js
 var Output = function() {
-  var $Output = ($__createClassNoExtends)({
-    constructor: function(body, params, instructions) {
-      this.js = this._tojs(body, params);
-      this.instructions = instructions;
-    },
-    _tojs: function(body, params) {
-      try {
-        params = Array.isArray(params) ? params.join(","): "";
-        return new Function(params, body).toString();
-      } catch (exception) {
-        console.error("Source dysfunction", body);
-        console.trace(exception);
-      }
-    }
-  }, {});
+  var $Output = ($__createClassNoExtends)({constructor: function() {
+      var body = arguments[0] !== (void 0) ? arguments[0]: "";
+      this.body = body;
+      this.temp = null;
+    }}, {});
   return $Output;
 }();
 

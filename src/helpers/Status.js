@@ -1,80 +1,72 @@
 "use strict";
 
-/**
- * Stateful compiler stuff.
- * @param {String} body
- */
-function Status () {
-	this.conf = [];
-}
+class Status {
 
-// Static ....................................................
+	constructor () {
+		this.mode = Status.MODE_JS;
+		this.conf = [];
+		this.peek = false;
+		this.poke = false;
+		this.cont = false;
+		this.adds = false;
+		this.func = null;
+		this.conf = null;
+		this.curl = null;
+		this.skip = 0;
+		this.last = 0;
+		this.spot = 0;
+		this.indx = 0;
+	}
 
-Status.MODE_JS = "js";
-Status.MODE_HTML = "html";
-Status.MODE_TAG = "tag";
+	/**
+	 * Go JS mode.
+	 */
+	gojs () {
+		this.mode = Status.MODE_JS;
+	}
 
-// Instance ..................................................
+	/**
+	 * Go HTML mode.
+	 */
+	gohtml () {
+		this.mode = Status.MODE_HTML;
+	}
 
-Status.prototype = {
-	mode : Status.MODE_JS,
-	peek : false,
-	poke : false,
-	cont : false,
-	adds : false,
-	func : null,
-	conf : null,
-	curl : null,
-	skip : 0,
-	last : 0,
-	spot : 0,
-	indx : 0,
-
-	// tags
-	refs : false, // pass by reference in tags
+	/**
+	 * Go tag mode.
+	 */
+	gotag () {
+		this.mode = Status.MODE_TAG;
+	}
 
 	/**
 	 * Is JS mode?
 	 * @returns {boolean}
 	 */
-	isjs : function () {
+	isjs () {
 		return this.mode === Status.MODE_JS;
-	},
+	}
 
 	/**
 	 * Is HTML mode?
 	 * @returns {boolean}
 	 */
-	ishtml : function () {
+	ishtml () {
 		return this.mode === Status.MODE_HTML;
-	},
+	}
 
 	/**
 	 * Is tag mode?
 	 * @returns {boolean}
 	 */
-	istag : function () {
+	istag () {
 		return this.mode === Status.MODE_TAG;
-	},
-
-	/**
-	 * Go JS mode.
-	 */
-	gojs : function () {
-		this.mode = Status.MODE_JS;
-	},
-
-	/**
-	 * Go HTML mode.
-	 */
-	gohtml : function () {
-		this.mode = Status.MODE_HTML;
-	},
-
-	/**
-	 * Go tag mode.
-	 */
-	gotag : function () {
-		this.mode = Status.MODE_TAG;
 	}
 };
+
+
+// Static ...............................
+
+Status.MODE_JS = "js";
+Status.MODE_HTML = "html";
+Status.MODE_TAG = "tag";

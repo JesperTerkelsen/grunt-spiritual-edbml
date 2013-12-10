@@ -15,35 +15,23 @@ class FunctionCompiler extends Compiler {
 		super ( key );
 
 		/**
-		 * Source of compiled function.
-		 * @type {String}
-		 */
-		this.source = null;
-
-		/**
-		 * Imported functions and tags.
-		 * @type {Array<Import>}
-		 */
-		this.dependencies = null;
-
-		/**
-		 * Mapping script tag attributes.
-		 * @type {HashMap<String,String>}
-		 */
-		this.directives = null;
-
-		/**
 		 * Compile sequence.
 		 * @type {Array<string>}
 		 */
-		this.sequence = [ 
-			"_validate", 
-			"_extract", 
-			"_direct", 
-			"_declare", 
-			"_define", 
-			"_compile"
+		this._sequence = [ 
+			this._validate,
+			this._extract,
+			this._direct,
+			this._define,
+			this._compile
 		];
+
+		/**
+		 * Mapping script tag attributes. 
+		 * This may be put to future use.
+		 * @type {HashMap<String,String>}
+		 */
+		this._directives = null;
 
 		/**
 		 * Processing intstructions.
@@ -68,29 +56,26 @@ class FunctionCompiler extends Compiler {
 	 * Compile source to invocable function.
 	 * @param {String} source
 	 * @param {Map<String,String} directives
-	 * @returns {String}
+	 * @returns {Result}
 	 */
 	compile ( source, directives ) {
-		this.directives = directives || {};
-		this.source = source;
-		this.dependencies = [];
+		this._directives = directives || {};
 		this._params = [];
-		this._vars = [];
 		var head = {
 			declarations : {}, // Map<String,boolean>
 			functiondefs : [] // Array<String>
 		};
-		this.sequence.forEach ( function ( step ) {
-			this.source = this [ step ] ( this.source, head );
-		}, this );
-		return new Output ( this.source, this._params, this._instructions );
+		source = this._sequence.reduce (( s, step ) => {
+			return step.call ( this, s, head );
+		}, source );
+		return new Result ( source, this._params, this._instructions );
 	}
 
 
-	// PRIVATE ..............................................................................
+	// Private ..............................................................................
 
 	/**
-	 * Confirm no nested EDBML scripts because it's not parsable in the browser.
+	 * Confirm no nested EDBML scripts.
 	 * @see http://stackoverflow.com/a/6322601
 	 * @param {String} script
 	 * @param {What?} head
@@ -105,7 +90,6 @@ class FunctionCompiler extends Compiler {
 
 	/**
 	 * Handle directives. Nothing by default.
-	 * @see {TagCompiler._direct}
 	 * @param  {String} script
 	 * @returns {String}
 	 */
@@ -120,11 +104,11 @@ class FunctionCompiler extends Compiler {
 	 * @returns {String}
 	 */
 	_extract ( script, head ) {
-		Instruction.from ( script ).forEach ( function ( pi ) {
+		Instruction.from ( script ).forEach (( pi ) => {
 			this._instructions = this._instructions || [];
 			this._instructions.push ( pi );
 			this._instruct ( pi );
-		}, this );
+		});
 		return Instruction.clean ( script );
 	}
 
@@ -133,8 +117,8 @@ class FunctionCompiler extends Compiler {
 	 * @param {Instruction} pi
 	 */
 	_instruct ( pi ) {
-		var type = pi.type;
-		var atts = pi.atts;
+		var type = pi.tag;
+		var atts = pi.attributes;
 		var name = atts.name;
 		switch ( type ) {
 			case "param" :
@@ -144,36 +128,14 @@ class FunctionCompiler extends Compiler {
 	}
 
 	/**
-	 * Remove processing instrutions and translate collected inputs to variable declarations.
-	 * @param {String} script
-	 * @param {What?} head
-	 * @returns {String}
-	 */
-	_declare ( script, head ) {
-		var funcs = [];
-		this.dependencies.forEach ( function ( dep ) {
-			head.declarations [ dep.name ] = true;
-			funcs.push ( dep.name + " = get ( self, '" + dep.tempname () + "' );\n" );
-		}, this );
-		if ( funcs [ 0 ]) {
-			head.functiondefs.push ( 
-				"( function functions ( get ) {\n" +
-				funcs.join ( "" ) +
-				"}( Function.get ));"
-			);
-		}
-		return script;
-	}
-
-	/**
-	 * Define more stuff in head.
+	 * Define stuff in head.
 	 * @param {String} script
 	 * @param {What?} head
 	 * @returns {String}
 	 */
 	_define ( script, head ) {
 		var vars = "", html = "var ";
-		each ( head.declarations, function ( name ) {
+		each ( head.declarations, ( name ) => {
 			vars += ", " + name;
 		});
 		if ( this._params.indexOf ( "out" ) < 0 ) {
@@ -183,7 +145,7 @@ class FunctionCompiler extends Compiler {
 			html += "att = new edb.Att () ";
 		}
 		html += vars + ";\n";
-		head.functiondefs.forEach ( function ( def ) {
+		head.functiondefs.forEach (( def ) => {
 			html += def +"\n";
 		});
 		return html + script;
@@ -204,7 +166,7 @@ class FunctionCompiler extends Compiler {
 // Static ..................................................................................
 
 /**
- * RegExp used to validate no nested scripts (because those are not parsable in the browser). 
+ * RegExp used to validate no nested scripts. 
  * http://stackoverflow.com/questions/1441463/how-to-get-regex-to-match-multiple-script-tags
  * http://stackoverflow.com/questions/1750567/regex-to-get-attributes-and-body-of-script-tags
  * TODO: stress test for no SRC attribute!

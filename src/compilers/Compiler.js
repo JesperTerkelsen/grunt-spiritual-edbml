@@ -1,8 +1,7 @@
 "use strict";
 
 /**
- * Compiler base class just so we can offload 
- * the worst stringparsing from our subclasses.
+ * Compiler base.
  */
 class Compiler {
 
@@ -19,9 +18,9 @@ class Compiler {
 	 * @param {String} line
 	 * @param {Runner} runner
 	 * @param {Status} status
-	 * @param {Result} result
+	 * @param {Output} output
 	 */
-	newline ( line, runner, status, result ) {
+	newline ( line, runner, status, output ) {
 		status.last = line.length - 1;
 		status.adds = line [ 0 ] === "+";
 		status.cont = status.cont || ( status.ishtml () && status.adds );
@@ -32,16 +31,16 @@ class Compiler {
 	 * @param {String} line
 	 * @param {Runner} runner
 	 * @param {Status} status
-	 * @param {Result} result
+	 * @param {Output} output
 	 */
-	endline ( line, runner, status, result ) {
+	endline ( line, runner, status, output ) {
 		if ( status.ishtml ()) {
 			if ( !status.cont ) {
-				result.body += "';\n";
+				output.body += "';\n";
 				status.gojs ();
 			}
 		} else {
-			result.body += "\n";
+			output.body += "\n";
 		}
 		status.cont = false;
 	}
@@ -51,26 +50,26 @@ class Compiler {
 	 * @param {String} c
 	 * @param {Runner} runner
 	 * @param {Status} status
-	 * @param {Result} result
+	 * @param {Output} output
 	 */
-	nextchar ( c, runner, status, result ) {
+	nextchar ( c, runner, status, output ) {
 		switch ( status.mode ) {
 			case Status.MODE_JS :
-				this._compilejs ( c, runner, status, result );
+				this._compilejs ( c, runner, status, output );
 				break;
 			case Status.MODE_HTML :
-				this._compilehtml ( c, runner, status, result);
+				this._compilehtml ( c, runner, status, output);
 				break;
 			case Status.MODE_TAG :
-				this._compiletag ( c, runner, status, result );
+				this._compiletag ( c, runner, status, output );
 				break;
 		}
 		if ( status.skip-- <= 0 ) {
 			if ( status.poke || status.geek ) {
-				result.temp += c;
+				output.temp += c;
 			} else {
 				if ( !status.istag ()) {
-					result.body += c;
+					output.body += c;
 				}
 			}
 		}
@@ -87,10 +86,10 @@ class Compiler {
 	_compile ( script ) {
 		var runner = new Runner (); 
 		var status = new Status ();
-		var result = new Result ( "'use strict';\n" );
-		runner.run ( this, script, status, result );
-		result.body += ( status.ishtml () ? "';" : "" ) + "\nreturn out.write ();";
-		return result.format ();
+		var output = new Output ( "'use strict';\n" );
+		runner.run ( this, script, status, output );
+		output.body += ( status.ishtml () ? "';" : "" ) + "\nreturn out.write ();";
+		return output.body;
 	}
 
 	/**
@@ -98,9 +97,9 @@ class Compiler {
 	 * @param {String} c
 	 * @param {Runner} runner
 	 * @param {Status} status
-	 * @param {Result} result
+	 * @param {Output} output
 	 */
-	_compilejs ( c, runner, status, result ) {
+	_compilejs ( c, runner, status, output ) {
 		switch ( c ) {
 			case "<" :
 				if ( runner.firstchar ) {
@@ -115,13 +114,13 @@ class Compiler {
 						this._bbb ( status );
 					} else {
 						status.gohtml ();
-						status.spot = result.body.length - 1;
-						result.body += "out.html += '";
+						status.spot = output.body.length - 1;
+						output.body += "out.html += '";
 					}
 				}
 				break;
 			case "@" :
-				this._scriptatt ( runner, status, result );
+				this._scriptatt ( runner, status, output );
 				break;
 		}
 	}
@@ -131,9 +130,9 @@ class Compiler {
 	 * @param {String} c
 	 * @param {Runner} runner
 	 * @param {Status} status
-	 * @param {Result} result
+	 * @param {Output} output
 	 */
-	_compilehtml ( c, runner, status, result ) {
+	_compilehtml ( c, runner, status, output ) {
 		var special = status.peek || status.poke || status.geek;
 		switch ( c ) {
 			case "{" :
@@ -147,20 +146,20 @@ class Compiler {
 						status.peek = false;
 						status.skip = 1;
 						status.curl = 0;
-						result.body += ") + '";
+						output.body += ") + '";
 					}
 					if ( status.poke ) {
-						this._poke ( status, result );
+						this._poke ( status, output );
 						status.poke = false;
-						result.temp = null;
+						output.temp = null;
 						status.spot = -1;
 						status.skip = 1;
 						status.curl = 0;
 					}
 					if ( status.geek ) {
-						this._geek ( status, result );
+						this._geek ( status, output );
 						status.geek = false;
-						result.temp = null;
+						output.temp = null;
 						status.spot = -1;
 						status.skip = 1;
 						status.curl = 0;
@@ -173,12 +172,12 @@ class Compiler {
 						status.geek = true;
 						status.skip = 2;
 						status.curl = 0;
-						result.temp = "";
+						output.temp = "";
 					} else {
 						status.peek = true;
 						status.skip = 2;
 						status.curl = 0;
-						result.body += "' + (";
+						output.body += "' + (";
 					}			
 				}
 				break;
@@ -187,7 +186,7 @@ class Compiler {
 					status.poke = true;
 					status.skip = 2;
 					status.curl = 0;
-					result.temp = "";
+					output.temp = "";
 				}
 				break;
 			case "+" :
@@ -200,11 +199,11 @@ class Compiler {
 				break;
 			case "'" :
 				if ( !special ) {
-					result.body += "\\";
+					output.body += "\\";
 				}
 				break;
 			case "@" :
-				this._htmlatt ( runner, status, result );
+				this._htmlatt ( runner, status, output );
 				break;
 		}
 	}
@@ -214,7 +213,7 @@ class Compiler {
 	 * @param {String} c
 	 * @param {Runner} runner
 	 * @param {Status} status
-	 * @param {Result} result
+	 * @param {Output} output
 	 */
 	_compiletag ( status, c, i, line ) {
 		switch ( c ) {
@@ -237,18 +236,18 @@ class Compiler {
 	 * @param {String} line
 	 * @param {number} i
 	 */
-	_scriptatt ( runner, status, result ) {
+	_scriptatt ( runner, status, output ) {
 		var attr = Compiler._ATTREXP;
 		var rest, name;
 		if ( runner.behind ( "@" )) {} 
 		else if ( runner.ahead ( "@" )) {
-			result.body += "var att = new Att ();";
+			output.body += "var att = new Att ();";
 			status.skip = 2;
 		} else {
 			rest = runner.lineahead ();
 			name = attr.exec ( rest )[ 0 ];
 			if ( name ) {
-				result.body += rest.replace ( name, "att['" + name + "']" );
+				output.body += rest.replace ( name, "att['" + name + "']" );
 				status.skip = rest.length + 1;
 			} else {
 				throw "Bad @name: " + rest;
@@ -261,21 +260,21 @@ class Compiler {
 	 * @param {String} line
 	 * @param {number} i
 	 */
-	_htmlatt ( runner, status, result ) {
+	_htmlatt ( runner, status, output ) {
 		var attr = Compiler._ATTREXP;
 		var rest, name, dels, what;
 		if ( runner.behind ( "@" )) {}
 		else if ( runner.behind ( "#{" )) { console.error ( "todo" );} // onclick="#{@passed}"
 		else if ( runner.ahead ( "@" )) {
-			result.body += "' + att._all () + '";
+			output.body += "' + att._all () + '";
 			status.skip = 2;
 		} else {
 			rest = runner.lineahead ();
 			name = attr.exec ( rest )[ 0 ];
 			dels = runner.behind ( "-" );
 			what = dels ? "att._pop" : "att._out";
-			result.body = dels ? result.body.substring ( 0, result.body.length - 1 ) : result.body;
-			result.body += "' + " + what + " ( '" + name + "' ) + '";
+			output.body = dels ? output.body.substring ( 0, output.body.length - 1 ) : output.body;
+			output.body += "' + " + what + " ( '" + name + "' ) + '";
 			status.skip = name.length + 1;
 		}
 	}
@@ -283,35 +282,35 @@ class Compiler {
 	/**
 	 * Generate poke at marked spot.
 	 * @param {Status} status
-	 * @param {Result} result
+	 * @param {Output} output
 	 */
-	_poke ( status, result ) {
-		this._inject ( status, result, Compiler._POKE );
+	_poke ( status, output ) {
+		this._inject ( status, output, Compiler._POKE );
 	}
 
 	/**
 	 * Generate geek at marked spot.
 	 * @param {Status} status
-	 * @param {Result} result
+	 * @param {Output} output
 	 */
-	_geek ( status, result ) {
-		this._inject ( status, result, Compiler._GEEK );
+	_geek ( status, output ) {
+		this._inject ( status, output, Compiler._GEEK );
 	}
 
 	/**
 	 * Inject JS (outline and inline combo) at marked spot.
 	 * @param {Status} status
-	 * @param {Result} result
+	 * @param {Output} output
 	 * @param {Map<String,String>} js
 	 */
-	_inject ( status, result, js ) {
-		var body = result.body,
-			temp = result.temp,
+	_inject ( status, output, js ) {
+		var body = output.body,
+			temp = output.temp,
 			spot = status.spot,
 			prev = body.substring ( 0, spot ),
 			next = body.substring ( spot ),
 			name = this.uniqueid + ( this.keyindex ++ );
-		result.body = 
+		output.body = 
 			prev + "\n" + 
 			js.outline.replace ( "$name", name ).replace ( "$temp", temp ) + 
 			next +

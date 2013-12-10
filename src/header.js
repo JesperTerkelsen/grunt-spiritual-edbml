@@ -5,7 +5,7 @@
  * @see http://wiki.ecmascript.org/doku.php?id=strawman:define_properties_operator
  * @param {object} proto
  * @param {object} props
- */
+ *
 function extend ( proto, props ) {
 	var resolved = Object.create ( null );
 	Object.keys ( props ).forEach ( function ( prop ) {
@@ -18,6 +18,7 @@ function extend ( proto, props ) {
 	});
 	return Object.create ( proto, resolved );
 }
+*/
 
 /**
  * Call function for each own key in object (exluding the prototype stuff) 
@@ -27,7 +28,7 @@ function extend ( proto, props ) {
  * @param @optional {object} thisp
  */
 function each ( object, func, thisp ) {
-	return Object.keys ( object ).map ( function ( key ) {
+	return Object.keys ( object ).map (( key ) => {
 		return func.call ( thisp, key, object [ key ]);
 	});
 }
@@ -36,11 +37,12 @@ function each ( object, func, thisp ) {
  * @deprecated
  * Generate probable unique key.
  * @returns {String}
- */
+ *
 function unique () {
 	var ran = String ( Math.random ());
 	return "key" + ran.slice ( 2, 11 );
 }
+*/
 
 /**
  * Autocast string to an inferred type. "123" returns a number 
