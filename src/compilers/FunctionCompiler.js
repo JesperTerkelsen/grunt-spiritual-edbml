@@ -18,7 +18,7 @@ class FunctionCompiler extends Compiler {
 		 * Compile sequence.
 		 * @type {Array<string>}
 		 */
-		this.sequence = [ 
+		this._sequence = [ 
 			this._validate,
 			this._extract,
 			this._direct,
@@ -56,7 +56,7 @@ class FunctionCompiler extends Compiler {
 	 * Compile source to invocable function.
 	 * @param {String} source
 	 * @param {Map<String,String} directives
-	 * @returns {String}
+	 * @returns {Result}
 	 */
 	compile ( source, directives ) {
 		this._directives = directives || {};
@@ -65,7 +65,7 @@ class FunctionCompiler extends Compiler {
 			declarations : {}, // Map<String,boolean>
 			functiondefs : [] // Array<String>
 		};
-		source = this.sequence.reduce (( s, step ) => {
+		source = this._sequence.reduce (( s, step ) => {
 			return step.call ( this, s, head );
 		}, source );
 		return new Result ( source, this._params, this._instructions );
@@ -117,8 +117,8 @@ class FunctionCompiler extends Compiler {
 	 * @param {Instruction} pi
 	 */
 	_instruct ( pi ) {
-		var type = pi.type;
-		var atts = pi.atts;
+		var type = pi.tag;
+		var atts = pi.attributes;
 		var name = atts.name;
 		switch ( type ) {
 			case "param" :

@@ -43,7 +43,9 @@ module.exports = function ( grunt ) {
         },
 			},
 			dist: {
-				dest: "tasks/compiler.js",
+				dest: "tasks/things/compiler.js",
+				//dest:"../spiritual-tst/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
+				//dest:"../../Greenfield/Chrome/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
 				src: [
 					"lib/traceur/runtime.js",
 					"header.js",
@@ -55,8 +57,6 @@ module.exports = function ( grunt ) {
 					"helpers/Result.js",
 					"helpers/Status.js",
 					"helpers/Output.js",
-					//"results/FunctionResult.js",
-					//"results/ScriptResult.js",
 					"footer.js"
 				].map ( function ( src ) {
 					return "build/src/" + src;

@@ -7,16 +7,14 @@
 class ScriptCompiler extends FunctionCompiler {
 
 	/**
+	 * Map observed types.
+	 * Add custom sequence.
 	 * @param {String} key
 	 */
 	constructor ( key ) {
-
-		/**
-		 * Observed data types.
-		 * @type {Map<String,String}
-		 */
-		this.inputs = Object.create ( null );	
 		super ( key );
+		this.inputs = Object.create ( null );
+		this._sequence.splice ( 3, 0, this._declare );
 	}
 	
 
@@ -27,8 +25,8 @@ class ScriptCompiler extends FunctionCompiler {
 	 */
 	_instruct ( pi ) {
 		super._instruct ( pi );
-		var atts = pi.atts;
-		switch ( pi.type ) {
+		var atts = pi.attributes;
+		switch ( pi.tag ) {
 			case "input" :
 				this.inputs [ atts.name ] = atts.type;
 				break;
@@ -36,22 +34,11 @@ class ScriptCompiler extends FunctionCompiler {
 	}
 
 	/**
-	 * Declare.
-	 * @overrides {FunctionCompiler} declare
-	 * @param {String} script
-	 * @returns {String}
-	 */
-	_declare ( script, head ) {
-		super._declare ( script, head );
-		return this._declareinputs ( script, head );
-	}
-
-	/**
 	 * Declare inputs.
 	 * @param {String} script
 	 * @returns {String}
 	 */
-	_declareinputs ( script, head ) {
+	_declare ( script, head ) {
 		var defs = [];
 		each ( this.inputs, function ( name, type ) {
 			head.declarations [ name ] = true;

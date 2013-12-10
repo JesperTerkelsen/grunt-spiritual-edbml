@@ -11,14 +11,12 @@ class Instruction {
 	 * @param {String} pi
 	 */
 	constructor ( pi ) {
-		this.type = null; // instruction type
-		this.atts = null; // instruction attributes
-		this.atts = Object.create ( null );
-		this.type = pi.split ( "<?" )[ 1 ].split ( " " )[ 0 ]; // TODO: regexp this
+		this.tag = pi.split ( "<?" )[ 1 ].split ( " " )[ 0 ]; // TODO: regexp this
+		this.attributes = Object.create ( null );
 		var hit, atexp = Instruction._ATEXP;
 		while (( hit = atexp.exec ( pi ))) {
 			var n = hit [ 1 ], v = hit [ 2 ];
-			this.atts [ n ] = cast ( v );
+			this.attributes [ n ] = cast ( v );
 		}
 	}
 }
