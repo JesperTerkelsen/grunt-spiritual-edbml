@@ -26,6 +26,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Wired Earp <wiredearp@gmail.com.invalid>",
+  "author": "Wired Earp <wiredearp@gmail.com>",
   "license": "MIT"
 }
