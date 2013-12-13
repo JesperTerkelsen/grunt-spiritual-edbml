@@ -20,7 +20,7 @@ exports.process = function ( grunt, files, options ) {
 			var results = trawloutline ( grunt, sources, options );
 			if ( results.length && !errors ) {
 				var text = formatter.beautify ( results );
-				grunt.file.write ( target, assistant.hotfix ( text ));
+				grunt.file.write ( target, text );
 				grunt.log.writeln ( "Generated " + target );
 			}
 		});

@@ -51,12 +51,13 @@ exports.declare = function ( name, result ) {
  * Ouch. Somethings gotta give somewhere.
  * @param {String} text
  * @returns {String}
- */
+ *
 exports.hotfix = function ( text ) {
 	return text.
 		replace ( /&quot;&apos;/g, "&quot;'" ).
 		replace ( /&apos;&quot;/g, "'&quot;" );
 };
+*/
 
 /**
  * @todo COPY-PASTE!

@@ -1,3 +1,5 @@
+"use strict";
+
 var cheerio = require ( "cheerio" );
 var compiler = require ( "./compiler" );
 var formatter = require ( "./formatter" );
@@ -16,7 +18,7 @@ exports.process = function ( grunt, files, options ) {
 		if ( !errors ) {
 			Object.keys ( results ).forEach ( function ( src ) {
 				var file = rename ( src, options );
-				var text = assistant.hotfix ( results [ src ]);
+				var text = results [ src ];
 				grunt.file.write ( file, text );
 				grunt.log.writeln ( "File \"" + file + "\" created." );
 			});
@@ -97,22 +99,12 @@ function resolve ( html, holders ) {
 function convertinline ( script, options, key, tab ) {
 	var js, dirs = assistant.directives ( script );
 	var result = compiler.compile ( script.html (), dirs );
-
-	// var pis = result.instructionset;
-	// js = namedfunction ( result.functionstring, key );
-	// js = result.functionstring;
-	// js += pis ? ";\n" + key + ".$instructions = " + JSON.stringify ( pis ) + ";" : "";
-	// js = options.beautify ? formatter.beautify ( js, tab, true ) : formatter.uglify ( js );
-	
-	/*
-	 * @todo What happened to the placeholder?
-	 */
-	key = "edb." + key;
-	js = assistant.declare ( key, result );
+	var scriptid = "edb." + key;
+	js = assistant.declare ( scriptid, result );
 	js = options.beautify ? formatter.beautify ( js, tab, true ) : formatter.uglify ( js );
-	script.html ( js ). // "var " + key + " = " + placeholder ( key ) ?????????????????????
+	script.html ( placeholder ( key )).
 		addClass ( "gui-script" ).
-		attr ( "gui.scriptid", key ).
+		attr ( "gui.scriptid", scriptid ).
 		removeAttr ( "type" );
 	return js;
 }
