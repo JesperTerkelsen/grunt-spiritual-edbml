@@ -16,7 +16,8 @@ exports.process = function ( grunt, files, options ) {
 		if ( !errors ) {
 			Object.keys ( results ).forEach ( function ( src ) {
 				var file = rename ( src, options );
-				grunt.file.write ( file, results [ src ]);
+				var text = assistant.hotfix ( results [ src ]);
+				grunt.file.write ( file, text );
 				grunt.log.writeln ( "File \"" + file + "\" created." );
 			});
 		}
@@ -40,7 +41,8 @@ var errors = false;
  * @param {String} message
  */
 function error ( message ) {
-	grunt.log.error ( message );
+	//grunt.log.error ( message );
+	console.error ( message );
 	errors = true;
 }
 
@@ -94,14 +96,23 @@ function resolve ( html, holders ) {
  */
 function convertinline ( script, options, key, tab ) {
 	var js, dirs = assistant.directives ( script );
-	var result = compiler.compile ( script.html (), dirs, key );
-	var pis = result.instructionset;
-	js = namedfunction ( result.functionstring, key );
-	js += pis ? key + ".$instructions = " + JSON.stringify ( pis ) + ";" : "";
+	var result = compiler.compile ( script.html (), dirs );
+
+	// var pis = result.instructionset;
+	// js = namedfunction ( result.functionstring, key );
+	// js = result.functionstring;
+	// js += pis ? ";\n" + key + ".$instructions = " + JSON.stringify ( pis ) + ";" : "";
+	// js = options.beautify ? formatter.beautify ( js, tab, true ) : formatter.uglify ( js );
+	
+	/*
+	 * @todo What happened to the placeholder?
+	 */
+	key = "edb." + key;
+	js = assistant.declare ( key, result );
 	js = options.beautify ? formatter.beautify ( js, tab, true ) : formatter.uglify ( js );
-	script.html ( placeholder ( key )).
+	script.html ( js ). // "var " + key + " = " + placeholder ( key ) ?????????????????????
 		addClass ( "gui-script" ).
-		attr ( "gui.id", key ).
+		attr ( "gui.scriptid", key ).
 		removeAttr ( "type" );
 	return js;
 }
@@ -146,7 +157,8 @@ function tabbing ( script ) {
  * @param {String} js
  * @param @optional {String} name
  * @returns {String}
- */
+ *
 function namedfunction ( js, name ) {
 	return js.replace ( /^function/, "function " + ( name || "" ));
 }
+*/

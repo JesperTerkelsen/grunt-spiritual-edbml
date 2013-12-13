@@ -1,7 +1,8 @@
 "use strict";
 // Source: build/src/lib/traceur/runtime.js
 (function(global) {
-if (global.$traceurRuntime) {
+  'use strict';
+  if (global.$traceurRuntime) {
     return;
   }
   var $create = Object.create;
@@ -390,6 +391,19 @@ function cast(string) {
   }
   return result === "" ? true: result;
 }
+var generateKey = (function() {
+  var keys = {};
+  return function() {
+    var ran = Math.random().toString();
+    var key = "key" + ran.slice(2, 11);
+    if (keys[key]) {
+      key = generateKey();
+    } else {
+      keys[key] = true;
+    }
+    return key;
+  };
+}());
 
 
 
@@ -410,10 +424,7 @@ var $__getDescriptors = function(object) {
 };
 var Compiler = function() {
   var $Compiler = ($__createClassNoExtends)({
-    constructor: function(key) {
-      this.uniqueid = key;
-      this.keyindex = 0;
-    },
+    constructor: function() {},
     newline: function(line, runner, status, output) {
       status.last = line.length - 1;
       status.adds = line[0] === "+";
@@ -455,7 +466,7 @@ var Compiler = function() {
     _compile: function(script) {
       var runner = new Runner();
       var status = new Status();
-      var output = new Output("'use strict';\n");
+      var output = new Output();
       runner.run(this, script, status, output);
       output.body += (status.ishtml() ? "';": "") + "\nreturn out.write ();";
       return output.body;
@@ -616,7 +627,7 @@ var Compiler = function() {
       this._inject(status, output, Compiler._GEEK);
     },
     _inject: function(status, output, js) {
-      var body = output.body, temp = output.temp, spot = status.spot, prev = body.substring(0, spot), next = body.substring(spot), name = this.uniqueid + (this.keyindex++);
+      var body = output.body, temp = output.temp, spot = status.spot, prev = body.substring(0, spot), next = body.substring(spot), name = generateKey();
       output.body = prev + "\n" + js.outline.replace("$name", name).replace("$temp", temp) + next + js.inline.replace("$name", name);
     }
   }, {});
@@ -635,17 +646,7 @@ Compiler._ATTREXP = /^[^\d][a-zA-Z0-9-_\.]+/;
 
 
 // Source: build/src/compilers/FunctionCompiler.js
-var $__superDescriptor = function(proto, name) {
-  if (!proto) throw new TypeError('super is null');
-  return Object.getPropertyDescriptor(proto, name);
-}, $__superCall = function(self, proto, name, args) {
-  var descriptor = $__superDescriptor(proto, name);
-  if (descriptor) {
-    if ('value'in descriptor) return descriptor.value.apply(self, args);
-    if (descriptor.get) return descriptor.get.call(self).apply(self, args);
-  }
-  throw new TypeError("Object has no method '" + name + "'.");
-}, $__getProtoParent = function(superClass) {
+var $__getProtoParent = function(superClass) {
   if (typeof superClass === 'function') {
     var prototype = superClass.prototype;
     if (Object(prototype) === prototype || prototype === null) return superClass.prototype;
@@ -665,8 +666,7 @@ var $__superDescriptor = function(proto, name) {
 var FunctionCompiler = function($__super) {
   var $__proto = $__getProtoParent($__super);
   var $FunctionCompiler = ($__createClass)({
-    constructor: function(key) {
-      $__superCall(this, $__proto, "constructor", [key]);
+    constructor: function() {
       this._sequence = [this._validate, this._extract, this._direct, this._define, this._compile];
       this._directives = null;
       this._instructions = null;
@@ -717,12 +717,7 @@ var FunctionCompiler = function($__super) {
       each(head.declarations, (function(name) {
         vars += ", " + name;
       }));
-      if (this._params.indexOf("out") < 0) {
-        html += "out = new edb.Out (), ";
-      }
-      if (this._params.indexOf("att") < 0) {
-        html += "att = new edb.Att () ";
-      }
+      html += "att = new edb.Att () ";
       html += vars + ";\n";
       head.functiondefs.forEach((function(def) {
         html += def + "\n";
@@ -743,11 +738,22 @@ FunctionCompiler._NESTEXP = /<script.*type=["']?text\/edbml["']?.*>([\s\S]+?)/g;
 
 
 // Source: build/src/compilers/ScriptCompiler.js
+var $__superDescriptor = function(proto, name) {
+  if (!proto) throw new TypeError('super is null');
+  return Object.getPropertyDescriptor(proto, name);
+}, $__superCall = function(self, proto, name, args) {
+  var descriptor = $__superDescriptor(proto, name);
+  if (descriptor) {
+    if ('value'in descriptor) return descriptor.value.apply(self, args);
+    if (descriptor.get) return descriptor.get.call(self).apply(self, args);
+  }
+  throw new TypeError("Object has no method '" + name + "'.");
+};
 var ScriptCompiler = function($__super) {
   var $__proto = $__getProtoParent($__super);
   var $ScriptCompiler = ($__createClass)({
-    constructor: function(key) {
-      $__superCall(this, $__proto, "constructor", [key]);
+    constructor: function() {
+      $__superCall(this, $__proto, "constructor", []);
       this.inputs = Object.create(null);
       this._sequence.splice(3, 0, this._declare);
     },
@@ -767,7 +773,7 @@ var ScriptCompiler = function($__super) {
         defs.push(name + " = get ( " + type + " );\n");
       }, this);
       if (defs[0]) {
-        head.functiondefs.push("( function inputs ( get ) {\n" + defs.join("") + "})( this.script.inputs );");
+        head.functiondefs.push("( function inputs ( get ) {\n" + defs.join("") + "}( this.script.inputs ));");
       }
       return script;
     }
@@ -881,12 +887,18 @@ var Result = function() {
       var params = arguments[1] !== (void 0) ? arguments[1]: [];
       try {
         var js = new Function(params.join(","), body).toString();
-        return js.replace(/^function anonymous/, "function");
+        return this._wraparound(js);
       } catch (exception) {
         this.instructionset = null;
         this.errormessage = exception.message;
         return this._tofallbackstring(body, params, exception.message);
       }
+    },
+    _wraparound: function(js) {
+      js = js.replace(/^function anonymous/, "function $function");
+      js = Result.WRAPPER.replace("function $function() {}", js);
+      js = js.replace(/\&quot;\&apos;/g, "&quot;");
+      return js;
     },
     _tofallbackstring: function(body, params, exception) {
       body = this._emergencyformat(body, params);
@@ -916,6 +928,27 @@ var Result = function() {
   }, {});
   return $Result;
 }();
+Result.WRAPPER = (function() {
+  var wrapper = function() {
+    (function() {
+      'use strict';
+      var out;
+      function $function() {}
+      return function($in) {
+        if ($in && $in.$out) {
+          return function() {
+            out = $in.$out;
+            return $function.apply(this, arguments);
+          };
+        } else {
+          out = new edb.Out();
+          return $function.apply(this, arguments);
+        }
+      };
+    }());
+  }.toString();
+  return wrapper.substring(wrapper.indexOf("{") + 1, wrapper.lastIndexOf("}")).trim().slice(0, - 1);
+}());
 
 
 
@@ -958,7 +991,6 @@ var Status = function() {
   }, {});
   return $Status;
 }();
-;
 Status.MODE_JS = "js";
 Status.MODE_HTML = "html";
 Status.MODE_TAG = "tag";
@@ -978,10 +1010,10 @@ var Output = function() {
 
 
 // Source: build/src/footer.js
-exports.compile = function(edbml, options, key) {
+exports.compile = function(edbml, options) {
   if (edbml.contains("<?input")) {
-    return new ScriptCompiler(key).compile(edbml, options);
+    return new ScriptCompiler().compile(edbml, options);
   } else {
-    return new FunctionCompiler(key).compile(edbml, options);
+    return new FunctionCompiler().compile(edbml, options);
   }
 };

@@ -1,26 +1,6 @@
 "use strict";
 
 /**
- * Object.create with default property descriptors. 
- * @see http://wiki.ecmascript.org/doku.php?id=strawman:define_properties_operator
- * @param {object} proto
- * @param {object} props
- *
-function extend ( proto, props ) {
-	var resolved = Object.create ( null );
-	Object.keys ( props ).forEach ( function ( prop ) {
-		resolved [ prop ] = {
-			value : props [ prop ],
-			writable : true,
-			enumerable : true,
-			configurable : true
-		};
-	});
-	return Object.create ( proto, resolved );
-}
-*/
-
-/**
  * Call function for each own key in object (exluding the prototype stuff) 
  * with key and value as arguments. Returns array of function call results.
  * @param {object} object
@@ -32,17 +12,6 @@ function each ( object, func, thisp ) {
 		return func.call ( thisp, key, object [ key ]);
 	});
 }
-
-/**
- * @deprecated
- * Generate probable unique key.
- * @returns {String}
- *
-function unique () {
-	var ran = String ( Math.random ());
-	return "key" + ran.slice ( 2, 11 );
-}
-*/
 
 /**
  * Autocast string to an inferred type. "123" returns a number 
@@ -71,3 +40,22 @@ function cast ( string ) {
 	}
 	return result === "" ? true : result;
 }
+
+/**
+ * Generate unique key.
+ * Note: Key structure must be kept in sync with {gui.KeyMaster#generatekey}.
+ * @returns {String}
+ */
+var generateKey = ( function () {
+	var keys = {};
+	return function () {
+		var ran = Math.random ().toString ();
+		var key = "key" + ran.slice ( 2, 11 );
+		if ( keys [ key ]) {
+			key = generateKey ();
+		} else {
+			keys [ key ] = true;
+		}
+		return key;
+	};
+}());

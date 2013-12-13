@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * Compile to function.
+ * Collapsing everything into a single function declaration.
  */
 class Result { 
 
@@ -17,7 +17,7 @@ class Result {
 	}
 
 	/**
-	 * Compute function source.
+	 * Compute single function declaration.
 	 * @param {String} script
 	 * @param @optional (Array<String>} params
 	 * @returns {String}
@@ -25,7 +25,7 @@ class Result {
 	_tofunctionstring ( body, params = []) {
 		try {
 			var js = new Function ( params.join ( "," ), body ).toString ();
-			return js.replace ( /^function anonymous/, "function" );
+			return this._wraparound ( js );
 		} catch ( exception ) {
 			this.instructionset = null;
 			this.errormessage = exception.message;
@@ -33,6 +33,20 @@ class Result {
 				body, params, exception.message 
 			);
 		}
+	}
+
+	/**
+	 * Wrap compiled function in boilerplate stuff that 
+	 * allows the function to "bind" to a given {edb.Out} 
+	 * depending on the type of arguments provided.
+	 * @param {String} js
+	 * @returns {String}
+	 */
+	_wraparound ( js ) {
+		js = js.replace ( /^function anonymous/, "function $function" );
+		js = Result.WRAPPER.replace ( "function $function() {}", js );
+		js = js.replace ( /\&quot;\&apos;/g, "&quot;" );
+		return js;
 	}
 
 	/**
@@ -82,3 +96,33 @@ class Result {
 		].join ( "\n" );
 	}
 }
+
+/**
+ * Let's declare a boilerplate to wrap around compiled functions.
+ * This looks like a function but is really a string declaration. 
+ * @type {String}
+ */
+Result.WRAPPER = ( function () {
+	var wrapper = function () {
+		( function () {
+			'use strict';
+			var out;
+			function $function() {}
+			return function ( $in ) {
+				if ( $in && $in.$out ) {
+					return function () {
+						out = $in.$out;
+						return $function.apply ( this, arguments );
+					};
+				} else {
+					out = new edb.Out ();
+					return $function.apply ( this, arguments );
+				}
+			};
+		}());
+	}.toString ();
+	return wrapper.substring ( 
+		wrapper.indexOf ( "{" ) + 1, 
+		wrapper.lastIndexOf ( "}" )
+	).trim ().slice ( 0, -1 );
+}());

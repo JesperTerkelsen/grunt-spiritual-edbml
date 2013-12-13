@@ -1,7 +1,7 @@
 {
   "name": "grunt-spiritual-edbml",
   "description": "Compile EDBML",
-  "version": "0.1.2",
+  "version": "0.1.0",
   "dependencies": {
     "cheerio": "~0.12.3",
     "esformatter": "0.0.6",
@@ -18,14 +18,8 @@
     "type": "git",
     "url": "git://github.com/wunderbyte/grunt-spiritual-edbml.git"
   },
+  "readme": "Compile EDBML to JS via Grunt.",
   "bugs": {
     "url": "https://github.com/wunderbyte/grunt-spiritual-edbml/issues"
-  },
-  "homepage": "https://github.com/wunderbyte/grunt-spiritual-edbml",
-  "main": "Gruntfile.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "Wired Earp <wiredearp@gmail.com.invalid>",
-  "license": "MIT"
+  }
 }

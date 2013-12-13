@@ -8,11 +8,9 @@
 class FunctionCompiler extends Compiler {
 	
 	/**
-	 * @param {String} key
+	 * Construction time again.
 	 */
-	constructor ( key ) {
-
-		super ( key );
+	constructor () {
 
 		/**
 		 * Compile sequence.
@@ -138,12 +136,14 @@ class FunctionCompiler extends Compiler {
 		each ( head.declarations, ( name ) => {
 			vars += ", " + name;
 		});
+		/*
 		if ( this._params.indexOf ( "out" ) < 0 ) {
 			html += "out = new edb.Out (), ";
 		}
-		if ( this._params.indexOf ( "att" ) < 0 ) {
+		*/
+		//if ( this._params.indexOf ( "att" ) < 0 ) {
 			html += "att = new edb.Att () ";
-		}
+		//}
 		html += vars + ";\n";
 		head.functiondefs.forEach (( def ) => {
 			html += def +"\n";
@@ -166,7 +166,8 @@ class FunctionCompiler extends Compiler {
 // Static ..................................................................................
 
 /**
- * RegExp used to validate no nested scripts. 
+ * RegExp used to validate no nested scripts. Important back when all this was a clientside 
+ * framework because the browser can't parse nested scripts, nowadays it might be practical?
  * http://stackoverflow.com/questions/1441463/how-to-get-regex-to-match-multiple-script-tags
  * http://stackoverflow.com/questions/1750567/regex-to-get-attributes-and-body-of-script-tags
  * TODO: stress test for no SRC attribute!
