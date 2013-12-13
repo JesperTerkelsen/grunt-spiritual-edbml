@@ -1,7 +1,8 @@
 "use strict";
 
 /**
- * Script runner.
+ * Script runner. Iterating strings one character at a time 
+ * while using advanced algorithms to look ahead and behind.
  */
 class Runner {
 

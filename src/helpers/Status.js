@@ -1,5 +1,8 @@
 "use strict";
 
+/**
+ * Tracking compiler state while compiling. 
+ */
 class Status {
 
 	constructor () {
@@ -62,7 +65,7 @@ class Status {
 	istag () {
 		return this.mode === Status.MODE_TAG;
 	}
-};
+}
 
 
 // Static ...............................

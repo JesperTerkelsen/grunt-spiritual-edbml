@@ -1,18 +1,12 @@
 "use strict";
 
 /**
- * Compiler base.
+ * Compiler base. Mostly just so we can split the logic into more files.
+ * @see {FunctionCompiler}
+ * @see {ScriptCompiler}
  */
 class Compiler {
-
-	/**
-	 * @param {String} key
-	 */
-	constructor ( key ) {
-		this.uniqueid = key;
-		this.keyindex = 0;
-	}
-
+	
 	/**
 	 * Line begins.
 	 * @param {String} line
@@ -86,7 +80,7 @@ class Compiler {
 	_compile ( script ) {
 		var runner = new Runner (); 
 		var status = new Status ();
-		var output = new Output ( "'use strict';\n" );
+		var output = new Output (); //var output = new Output ( "'use strict';\n" );
 		runner.run ( this, script, status, output );
 		output.body += ( status.ishtml () ? "';" : "" ) + "\nreturn out.write ();";
 		return output.body;
@@ -309,7 +303,7 @@ class Compiler {
 			spot = status.spot,
 			prev = body.substring ( 0, spot ),
 			next = body.substring ( spot ),
-			name = this.uniqueid + ( this.keyindex ++ );
+			name = generateKey (); //this.uniqueid + ( this.keyindex ++ );
 		output.body = 
 			prev + "\n" + 
 			js.outline.replace ( "$name", name ).replace ( "$temp", temp ) + 

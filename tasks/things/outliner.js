@@ -1,3 +1,5 @@
+"use strict";
+
 var cheerio = require ( "cheerio" );
 var compiler = require ( "./compiler" );
 var formatter = require ( "./formatter" );
@@ -17,7 +19,8 @@ exports.process = function ( grunt, files, options ) {
 			var sources = grunt.file.expand ( files [ target ]);
 			var results = trawloutline ( grunt, sources, options );
 			if ( results.length && !errors ) {
-				grunt.file.write ( target, formatter.beautify ( results ));
+				var text = formatter.beautify ( results );
+				grunt.file.write ( target, assistant.hotfix ( text ));
 				grunt.log.writeln ( "Generated " + target );
 			}
 		});
@@ -48,7 +51,8 @@ var errors = false;
  * @param {String} message
  */
 function error ( message ) {
-	grunt.log.error ( message );
+	//grunt.log.error ( message );
+	console.error ( message );
 	errors = true;
 }
 
@@ -62,7 +66,7 @@ function trawloutline ( grunt, sources ) {
 		var $ = cheerio.load ( grunt.file.read ( src ));
 		getscripts ( $, src ).each ( function ( i, script ) {
 			results.push ( 
-				parse ( $ ( script ), assistant.unique ( src, i ))
+				parse ( $ ( script ))
 			);
 		});
 	});
@@ -108,11 +112,11 @@ function validname ( name ) {
  * @param {$} script
  * @returns {String}
  */
-function parse ( script, key ) {
+function parse ( script ) {
 	var name = script.attr ( "id" );
 	var text = script.text ();
 	var atts = assistant.directives ( script );
-	return compile ( name, text, atts, key );
+	return compile ( name, text, atts );
 }
 
 /**
@@ -121,26 +125,7 @@ function parse ( script, key ) {
  * @param {String} edbml
  * @param {Map<String,object>} options
  */
-function compile ( name, edbml, options, key ) {
-	var result = compiler.compile ( edbml, options, key );
-	return declare ( name, result );
-}
-
-/**
- * Produce JS declarations.
- * @param {String} name
- * @param {String} name
- * @returns {String}
- */
-function declare ( name, result ) {
-	var fun = result.functionstring;
-	var pis = result.instructionset;
-	var output = "edb.declare ( \"" + name + "\" ).as (" + fun;
-	if ( pis ) {
-		pis = JSON.stringify ( pis );
-		output += ").withInstructions (" + pis + ");";
-	} else {
-		output += ");";
-	}
-	return output;
+function compile ( name, edbml, options ) {
+	var result = compiler.compile ( edbml, options );
+	return assistant.declare ( name, result );
 }

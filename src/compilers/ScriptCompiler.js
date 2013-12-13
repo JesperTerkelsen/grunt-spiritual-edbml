@@ -11,8 +11,8 @@ class ScriptCompiler extends FunctionCompiler {
 	 * Add custom sequence.
 	 * @param {String} key
 	 */
-	constructor ( key ) {
-		super ( key );
+	constructor () {
+		super ();
 		this.inputs = Object.create ( null );
 		this._sequence.splice ( 3, 0, this._declare );
 	}
@@ -48,7 +48,7 @@ class ScriptCompiler extends FunctionCompiler {
 			head.functiondefs.push ( 
 				"( function inputs ( get ) {\n" +
 				defs.join ( "" ) +
-				"})( this.script.inputs );" 
+				"}( this.script.inputs ));"
 			);
 		}
 		return script;

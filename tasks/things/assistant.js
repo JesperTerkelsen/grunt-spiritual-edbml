@@ -1,3 +1,5 @@
+"use strict";
+
 var shorthash = require ( "./shorthash" );
 
 /**
@@ -7,7 +9,7 @@ var shorthash = require ( "./shorthash" );
  */
 exports.unique = function ( filepath, index ) {
 	return "$" + shorthash.unique ( filepath ) + index;
-}
+};
 
 /**
  * Format script attributes as hashmap.
@@ -24,7 +26,37 @@ exports.directives = function ( script, extras ) {
 		map [ key ] = extras [ key ];
 	});
 	return map;
-}
+};
+
+/**
+ * Produce JS declarations.
+ * @param {String} name
+ * @param {String} name
+ * @returns {String}
+ */
+exports.declare = function ( name, result ) {
+	var fun = result.functionstring;
+	var pis = result.instructionset;
+	var output = "edb.declare ( \"" + name + "\" ).as (" + fun;
+	if ( pis ) {
+		pis = JSON.stringify ( pis );
+		output += ").withInstructions (" + pis + ");";
+	} else {
+		output += ");";
+	}
+	return output;
+};
+
+/**
+ * Ouch. Somethings gotta give somewhere.
+ * @param {String} text
+ * @returns {String}
+ */
+exports.hotfix = function ( text ) {
+	return text.
+		replace ( /&quot;&apos;/g, "&quot;'" ).
+		replace ( /&apos;&quot;/g, "'&quot;" );
+};
 
 /**
  * @todo COPY-PASTE!

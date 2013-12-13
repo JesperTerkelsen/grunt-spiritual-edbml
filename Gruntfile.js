@@ -39,7 +39,8 @@ module.exports = function ( grunt ) {
 				banner: "\"use strict\";\n",
 				process: function(src, filepath) {
           return '// Source: ' + filepath + '\n' +
-            src.replace(/(^|\n)[ \t]*('use strict'|"use strict");?\s*/g, '$1');
+            src.replace(/(^|\n)[ \t]*("use strict");?\s*/g, '$1');
+            // /(^|\n)[ \t]*('use strict'|"use strict");?\s*/g
         },
 			},
 			dist: {
