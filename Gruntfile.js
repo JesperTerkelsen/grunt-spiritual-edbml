@@ -46,7 +46,8 @@ module.exports = function ( grunt ) {
 			dist: {
 				dest: "tasks/things/compiler.js",
 				//dest:"../spiritual-tst/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
-				//dest:"../../Greenfield/Chrome/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
+				//dest:"../../Greenfield/Apps/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
+				//dest:"../../Dataplastique/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
 				src: [
 					"lib/traceur/runtime.js",
 					"header.js",

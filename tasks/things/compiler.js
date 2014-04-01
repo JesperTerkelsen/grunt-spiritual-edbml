@@ -634,12 +634,12 @@ var Compiler = function() {
   return $Compiler;
 }();
 Compiler._POKE = {
-  outline: "var $name = edb.set ( function ( value, checked ) {\n$temp;\n}, this );",
-  inline: "edb.go(event,&quot;\' + $name + \'&quot;);"
+  outline: "var $name = edb.$set ( function ( value, checked ) {\n$temp;\n}, this );",
+  inline: "edb.$go(event,&quot;\' + $name + \'&quot;);"
 };
 Compiler._GEEK = {
-  outline: "var $name = edb.set ( function () {\nreturn $temp;\n}, this );",
-  inline: "edb.get(&quot;\' + $name + \'&quot;);"
+  outline: "var $name = edb.$set ( function () {\nreturn $temp;\n}, this );",
+  inline: "edb.$get(&quot;\' + $name + \'&quot;);"
 };
 Compiler._ATTREXP = /^[^\d][a-zA-Z0-9-_\.]+/;
 
