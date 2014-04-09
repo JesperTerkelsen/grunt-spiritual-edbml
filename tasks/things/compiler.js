@@ -475,20 +475,9 @@ var Compiler = function() {
       switch (c) {
         case "<":
           if (runner.firstchar) {
-            var line = "JSHINT";
-            var i = "JSHINT";
-            var tag;
-            if (false && (tag = this._tagstart(line))) {
-              status.gotag();
-              this._aaa(status, line, i);
-            } else if (false && (tag = this._tagstop(line))) {
-              status.gotag();
-              this._bbb(status);
-            } else {
-              status.gohtml();
-              status.spot = output.body.length - 1;
-              output.body += "out.html += '";
-            }
+            status.gohtml();
+            status.spot = output.body.length - 1;
+            output.body += "out.html += '";
           }
           break;
         case "@":
@@ -516,7 +505,6 @@ var Compiler = function() {
               this._poke(status, output);
               status.poke = false;
               output.temp = null;
-              status.spot = - 1;
               status.skip = 1;
               status.curl = 0;
             }
@@ -524,7 +512,6 @@ var Compiler = function() {
               this._geek(status, output);
               status.geek = false;
               output.temp = null;
-              status.spot = - 1;
               status.skip = 1;
               status.curl = 0;
             }
@@ -532,22 +519,23 @@ var Compiler = function() {
           break;
         case "$":
           if (!special && runner.ahead("{")) {
-            if (runner.behind("gui.test=\"")) {
-              status.geek = true;
-              status.skip = 2;
-              status.curl = 0;
-              output.temp = "";
-            } else {
-              status.peek = true;
-              status.skip = 2;
-              status.curl = 0;
-              output.body += "' + (";
-            }
+            status.peek = true;
+            status.skip = 2;
+            status.curl = 0;
+            output.body += "' + (";
           }
           break;
         case "#":
           if (!special && runner.ahead("{")) {
             status.poke = true;
+            status.skip = 2;
+            status.curl = 0;
+            output.temp = "";
+          }
+          break;
+        case "!":
+          if (!special && runner.ahead("{")) {
+            status.geek = true;
             status.skip = 2;
             status.curl = 0;
             output.temp = "";
@@ -628,14 +616,16 @@ var Compiler = function() {
     },
     _inject: function(status, output, js) {
       var body = output.body, temp = output.temp, spot = status.spot, prev = body.substring(0, spot), next = body.substring(spot), name = generateKey();
-      output.body = prev + "\n" + js.outline.replace("$name", name).replace("$temp", temp) + next + js.inline.replace("$name", name);
+      var outl = js.outline.replace("$name", name).replace("$temp", temp);
+      output.body = prev + "\n" + outl + next + js.inline.replace("$name", name);
+      status.spot += outl.length + 1;
     }
   }, {});
   return $Compiler;
 }();
 Compiler._POKE = {
   outline: "var $name = edb.$set ( function ( value, checked ) {\n$temp;\n}, this );",
-  inline: "edb.$go(event,&quot;\' + $name + \'&quot;);"
+  inline: "edb.$run(event,&quot;\' + $name + \'&quot;);"
 };
 Compiler._GEEK = {
   outline: "var $name = edb.$set ( function () {\nreturn $temp;\n}, this );",
