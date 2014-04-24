@@ -136,11 +136,12 @@ class FunctionCompiler extends Compiler {
 		each ( head.declarations, ( name ) => {
 			vars += ", " + name;
 		});
-		/*
+
 		if ( this._params.indexOf ( "out" ) < 0 ) {
-			html += "out = new edb.Out (), ";
+			//html += "out = new edb.Out (), ";
+			html += "out = $function.$out, ";
 		}
-		*/
+
 		//if ( this._params.indexOf ( "att" ) < 0 ) {
 			html += "att = new edb.Att () ";
 		//}

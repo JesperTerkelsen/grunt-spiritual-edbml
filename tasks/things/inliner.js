@@ -59,15 +59,12 @@ function trawlinline ( grunt, sources, options ) {
 		$ ( "script" ).each ( function ( i, script ) {
 			script = $ ( script );
 			if ( script.attr ( "type" ) === "text/edbml" ) {
-				if ( script.attr ( "id" )) {
-					script.replaceWith ( "<h1>TODO!<h1>" );
-				} else {
-					var tab = tabbing ( script );
-					var key = assistant.unique ( src, i );
-					holders [ key ] = convertinline ( 
-						script, options, key, tab
-					);
-				}
+				var id = script.attr ( "id" );
+				var key = id || assistant.unique ( src, i );
+				var tab = tabbing ( script );
+				holders [ key ] = convertinline ( 
+					script, options, key, tab, id
+				);
 			}
 		});
 		if ( Object.keys ( holders ).length ) {
@@ -96,16 +93,17 @@ function resolve ( html, holders ) {
  * @param {$} script
  * @param {Map} options
  */
-function convertinline ( script, options, key, tab ) {
+function convertinline ( script, options, key, tab, id ) {
 	var js, dirs = assistant.directives ( script );
 	var result = compiler.compile ( script.html (), dirs );
-	var scriptid = "edb." + key;
+	var scriptid = id || "edb." + key;
 	js = assistant.declare ( scriptid, result );
 	js = options.beautify ? formatter.beautify ( js, tab, true ) : formatter.uglify ( js );
-	script.html ( placeholder ( key )).
-		addClass ( "gui-script" ).
-		attr ( "gui.scriptid", scriptid ).
-		removeAttr ( "type" );
+	script.html ( placeholder ( key )).removeAttr ( "type" );
+	if(!id) {
+		script.addClass ( "gui-script" );
+		script.attr ( "gui.scriptid", scriptid );
+	}
 	return js;
 }
 

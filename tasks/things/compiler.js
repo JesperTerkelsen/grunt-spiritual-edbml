@@ -466,7 +466,7 @@ var Compiler = function() {
     _compile: function(script) {
       var runner = new Runner();
       var status = new Status();
-      var output = new Output();
+      var output = new Output("'use strict';\n");
       runner.run(this, script, status, output);
       output.body += (status.ishtml() ? "';": "") + "\nreturn out.write ();";
       return output.body;
@@ -707,6 +707,9 @@ var FunctionCompiler = function($__super) {
       each(head.declarations, (function(name) {
         vars += ", " + name;
       }));
+      if (this._params.indexOf("out") < 0) {
+        html += "out = $function.$out, ";
+      }
       html += "att = new edb.Att () ";
       html += vars + ";\n";
       head.functiondefs.forEach((function(def) {
@@ -877,18 +880,14 @@ var Result = function() {
       var params = arguments[1] !== (void 0) ? arguments[1]: [];
       try {
         var js = new Function(params.join(","), body).toString();
-        return this._wraparound(js);
+        js = js.replace(/^function anonymous/, "function $function");
+        js = js.replace(/\&quot;\&apos;/g, "&quot;");
+        return js;
       } catch (exception) {
         this.instructionset = null;
         this.errormessage = exception.message;
         return this._tofallbackstring(body, params, exception.message);
       }
-    },
-    _wraparound: function(js) {
-      js = js.replace(/^function anonymous/, "function $function");
-      js = Result.WRAPPER.replace("function $function() {}", js);
-      js = js.replace(/\&quot;\&apos;/g, "&quot;");
-      return js;
     },
     _tofallbackstring: function(body, params, exception) {
       body = this._emergencyformat(body, params);
@@ -918,27 +917,6 @@ var Result = function() {
   }, {});
   return $Result;
 }();
-Result.WRAPPER = (function() {
-  var wrapper = function() {
-    (function() {
-      'use strict';
-      var out;
-      function $function() {}
-      return function($in) {
-        if ($in && $in.$out) {
-          return function() {
-            out = $in.$out;
-            return $function.apply(this, arguments);
-          };
-        } else {
-          out = new edb.Out();
-          return $function.apply(this, arguments);
-        }
-      };
-    }());
-  }.toString();
-  return wrapper.substring(wrapper.indexOf("{") + 1, wrapper.lastIndexOf("}")).trim().slice(0, - 1);
-}());
 
 
 

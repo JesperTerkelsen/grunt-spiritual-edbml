@@ -80,7 +80,7 @@ class Compiler {
 	_compile ( script ) {
 		var runner = new Runner (); 
 		var status = new Status ();
-		var output = new Output ();
+		var output = new Output ( "'use strict';\n" );
 		runner.run ( this, script, status, output );
 		output.body += ( status.ishtml () ? "';" : "" ) + "\nreturn out.write ();";
 		return output.body;

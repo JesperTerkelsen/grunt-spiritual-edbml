@@ -44,8 +44,8 @@ module.exports = function ( grunt ) {
         },
 			},
 			dist: {
-				dest: "tasks/things/compiler.js",
-				//dest:"../spiritual-tst/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
+				//dest: "tasks/things/compiler.js",
+				dest:"../spiritual-tst/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
 				//dest:"../../Greenfield/Chrome/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
 				//dest:"../../Hot/hot-drums/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
 				src: [
