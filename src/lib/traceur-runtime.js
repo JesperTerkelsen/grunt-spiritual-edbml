@@ -1,7 +1,6 @@
-"use strict";
-// Source: src/lib/traceur-runtime.js
 (function(global) {
-if (global.$traceurRuntime) {
+	'use strict';
+	if (global.$traceurRuntime) {
 		return;
 	}
 	var $Object = Object;
@@ -685,7 +684,8 @@ if (global.$traceurRuntime) {
 	$traceurRuntime.resolveUrl = resolveUrl;
 })();
 (function(global) {
-var $__2 = $traceurRuntime.assertObject($traceurRuntime),
+	'use strict';
+	var $__2 = $traceurRuntime.assertObject($traceurRuntime),
 			canonicalizeUrl = $__2.canonicalizeUrl,
 			resolveUrl = $__2.resolveUrl,
 			isAbsolute = $__2.isAbsolute;
@@ -832,7 +832,8 @@ var $__2 = $traceurRuntime.assertObject($traceurRuntime),
 	};
 })(typeof global !== 'undefined' ? global : this);
 System.register("traceur-runtime@0.0.33/src/runtime/polyfills/utils", [], function() {
-var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfills/utils";
+	"use strict";
+	var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfills/utils";
 	var toObject = $traceurRuntime.toObject;
 	function toUint32(x) {
 		return x | 0;
@@ -853,7 +854,8 @@ var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfills/utils";
 	};
 });
 System.register("traceur-runtime@0.0.33/src/runtime/polyfills/ArrayIterator", [], function() {
-var $__4;
+	"use strict";
+	var $__4;
 	var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfills/ArrayIterator";
 	var $__5 = $traceurRuntime.assertObject(System.get("traceur-runtime@0.0.33/src/runtime/polyfills/utils")),
 			toObject = $__5.toObject,
@@ -930,7 +932,8 @@ var $__4;
 	};
 });
 System.register("traceur-runtime@0.0.33/src/runtime/polyfills/Map", [], function() {
-var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfills/Map";
+	"use strict";
+	var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfills/Map";
 	var isObject = $traceurRuntime.assertObject(System.get("traceur-runtime@0.0.33/src/runtime/polyfills/utils")).isObject;
 	var getOwnHashObject = $traceurRuntime.getOwnHashObject;
 	var $hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -1052,7 +1055,8 @@ var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfills/Map";
 		}};
 });
 System.register("traceur-runtime@0.0.33/node_modules/rsvp/lib/rsvp/asap", [], function() {
-var __moduleName = "traceur-runtime@0.0.33/node_modules/rsvp/lib/rsvp/asap";
+	"use strict";
+	var __moduleName = "traceur-runtime@0.0.33/node_modules/rsvp/lib/rsvp/asap";
 	var $__default = function asap(callback, arg) {
 		var length = queue.push([callback, arg]);
 		if (length === 1) {
@@ -1103,7 +1107,8 @@ var __moduleName = "traceur-runtime@0.0.33/node_modules/rsvp/lib/rsvp/asap";
 		}};
 });
 System.register("traceur-runtime@0.0.33/src/runtime/polyfills/Promise", [], function() {
-var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfills/Promise";
+	"use strict";
+	var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfills/Promise";
 	var async = $traceurRuntime.assertObject(System.get("traceur-runtime@0.0.33/node_modules/rsvp/lib/rsvp/asap")).default;
 	var promiseRaw = {};
 	function isPromise(x) {
@@ -1339,7 +1344,8 @@ var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfills/Promise";
 		}};
 });
 System.register("traceur-runtime@0.0.33/src/runtime/polyfills/String", [], function() {
-var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfills/String";
+	"use strict";
+	var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfills/String";
 	var $toString = Object.prototype.toString;
 	var $indexOf = String.prototype.indexOf;
 	var $lastIndexOf = String.prototype.lastIndexOf;
@@ -1509,7 +1515,8 @@ var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfills/String";
 	};
 });
 System.register("traceur-runtime@0.0.33/src/runtime/polyfills/polyfills", [], function() {
-var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfills/polyfills";
+	"use strict";
+	var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfills/polyfills";
 	var Map = $traceurRuntime.assertObject(System.get("traceur-runtime@0.0.33/src/runtime/polyfills/Map")).Map;
 	var Promise = $traceurRuntime.assertObject(System.get("traceur-runtime@0.0.33/src/runtime/polyfills/Promise")).Promise;
 	var $__12 = $traceurRuntime.assertObject(System.get("traceur-runtime@0.0.33/src/runtime/polyfills/String")),
@@ -1579,560 +1586,9 @@ var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfills/polyfills";
 	return {};
 });
 System.register("traceur-runtime@0.0.33/src/runtime/polyfill-import", [], function() {
-var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfill-import";
+	"use strict";
+	var __moduleName = "traceur-runtime@0.0.33/src/runtime/polyfill-import";
 	var $__14 = $traceurRuntime.assertObject(System.get("traceur-runtime@0.0.33/src/runtime/polyfills/polyfills"));
 	return {};
 });
 System.get("traceur-runtime@0.0.33/src/runtime/polyfill-import" + '');
-
-
-
-// Source: build/compiler-es5.js
-var __moduleName = "build/compiler-es5";
-function each(object, func, thisp) {
-  return Object.keys(object).map((function(key) {
-    return func.call(thisp, key, object[key]);
-  }));
-}
-function cast(string) {
-  var result = String(string);
-  switch (result) {
-    case "null":
-      result = null;
-      break;
-    case "true":
-    case "false":
-      result = (result === "true");
-      break;
-    default:
-      if (String(parseInt(result, 10)) === result) {
-        result = parseInt(result, 10);
-      } else if (String(parseFloat(result)) === result) {
-        result = parseFloat(result);
-      }
-      break;
-  }
-  return result === "" ? true : result;
-}
-var generateKey = (function() {
-  var keys = {};
-  return function() {
-    var ran = Math.random().toString();
-    var key = "key" + ran.slice(2, 11);
-    if (keys[key]) {
-      key = generateKey();
-    } else {
-      keys[key] = true;
-    }
-    return key;
-  };
-}());
-var Compiler = function Compiler() {};
-var $Compiler = Compiler;
-($traceurRuntime.createClass)(Compiler, {
-  newline: function(line, runner, status, output) {
-    status.last = line.length - 1;
-    status.adds = line[0] === "+";
-    status.cont = status.cont || (status.ishtml() && status.adds);
-  },
-  endline: function(line, runner, status, output) {
-    if (status.ishtml()) {
-      if (!status.cont) {
-        output.body += "';\n";
-        status.gojs();
-      }
-    } else {
-      output.body += "\n";
-    }
-    status.cont = false;
-  },
-  nextchar: function(c, runner, status, output) {
-    switch (status.mode) {
-      case Status.MODE_JS:
-        this._compilejs(c, runner, status, output);
-        break;
-      case Status.MODE_HTML:
-        this._compilehtml(c, runner, status, output);
-        break;
-      case Status.MODE_TAG:
-        this._compiletag(c, runner, status, output);
-        break;
-    }
-    if (status.skip-- <= 0) {
-      if (status.poke || status.geek) {
-        output.temp += c;
-      } else {
-        if (!status.istag()) {
-          output.body += c;
-        }
-      }
-    }
-  },
-  _compile: function(script) {
-    var runner = new Runner();
-    var status = new Status();
-    var output = new Output("'use strict';\n");
-    runner.run(this, script, status, output);
-    output.body += (status.ishtml() ? "';" : "") + "\nreturn out.write ();";
-    return output.body;
-  },
-  _compilejs: function(c, runner, status, output) {
-    switch (c) {
-      case "<":
-        if (runner.firstchar) {
-          status.gohtml();
-          status.spot = output.body.length - 1;
-          output.body += "out.html += '";
-        }
-        break;
-      case "@":
-        this._scriptatt(runner, status, output);
-        break;
-    }
-  },
-  _compilehtml: function(c, runner, status, output) {
-    var special = status.peek || status.poke || status.geek;
-    switch (c) {
-      case "{":
-        if (special) {
-          status.curl++;
-        }
-        break;
-      case "}":
-        if (--status.curl === 0) {
-          if (status.peek) {
-            status.peek = false;
-            status.skip = 1;
-            status.curl = 0;
-            output.body += ") + '";
-          }
-          if (status.poke) {
-            this._poke(status, output);
-            status.poke = false;
-            output.temp = null;
-            status.skip = 1;
-            status.curl = 0;
-          }
-          if (status.geek) {
-            this._geek(status, output);
-            status.geek = false;
-            output.temp = null;
-            status.skip = 1;
-            status.curl = 0;
-          }
-        }
-        break;
-      case "$":
-        if (!special && runner.ahead("{")) {
-          status.peek = true;
-          status.skip = 2;
-          status.curl = 0;
-          output.body += "' + (";
-        }
-        break;
-      case "#":
-        if (!special && runner.ahead("{")) {
-          status.poke = true;
-          status.skip = 2;
-          status.curl = 0;
-          output.temp = "";
-        }
-        break;
-      case "!":
-        if (!special && runner.ahead("{")) {
-          status.geek = true;
-          status.skip = 2;
-          status.curl = 0;
-          output.temp = "";
-        }
-        break;
-      case "+":
-        if (runner.firstchar) {
-          status.skip = status.adds ? 1 : 0;
-        } else if (runner.lastchar) {
-          status.cont = true;
-          status.skip = 1;
-        }
-        break;
-      case "'":
-        if (!special) {
-          output.body += "\\";
-        }
-        break;
-      case "@":
-        this._htmlatt(runner, status, output);
-        break;
-    }
-  },
-  _compiletag: function(status, c, i, line) {
-    switch (c) {
-      case "$":
-        if (this._ahead(line, i, "{")) {
-          status.refs = true;
-          status.skip = 2;
-        }
-        break;
-      case ">":
-        status.gojs();
-        status.skip = 1;
-        break;
-    }
-  },
-  _scriptatt: function(runner, status, output) {
-    var attr = $Compiler._ATTREXP;
-    var rest,
-        name;
-    if (runner.behind("@")) {} else if (runner.ahead("@")) {
-      output.body += "var att = new Att ();";
-      status.skip = 2;
-    } else {
-      rest = runner.lineahead();
-      name = attr.exec(rest)[0];
-      if (name) {
-        output.body += rest.replace(name, "att['" + name + "']");
-        status.skip = rest.length + 1;
-      } else {
-        throw "Bad @name: " + rest;
-      }
-    }
-  },
-  _htmlatt: function(runner, status, output) {
-    var attr = $Compiler._ATTREXP;
-    var rest,
-        name,
-        dels,
-        what;
-    if (runner.behind("@")) {} else if (runner.behind("#{")) {
-      console.error("todo");
-    } else if (runner.ahead("@")) {
-      output.body += "' + att._all () + '";
-      status.skip = 2;
-    } else {
-      rest = runner.lineahead();
-      name = attr.exec(rest)[0];
-      dels = runner.behind("-");
-      what = dels ? "att._pop" : "att._out";
-      output.body = dels ? output.body.substring(0, output.body.length - 1) : output.body;
-      output.body += "' + " + what + " ( '" + name + "' ) + '";
-      status.skip = name.length + 1;
-    }
-  },
-  _poke: function(status, output) {
-    this._inject(status, output, $Compiler._POKE);
-  },
-  _geek: function(status, output) {
-    this._inject(status, output, $Compiler._GEEK);
-  },
-  _inject: function(status, output, js) {
-    var body = output.body,
-        temp = output.temp,
-        spot = status.spot,
-        prev = body.substring(0, spot),
-        next = body.substring(spot),
-        name = generateKey();
-    var outl = js.outline.replace("$name", name).replace("$temp", temp);
-    output.body = prev + "\n" + outl + next + js.inline.replace("$name", name);
-    status.spot += outl.length + 1;
-  }
-}, {});
-Compiler._POKE = {
-  outline: "var $name = edb.$set ( function ( value, checked ) {\n$temp;\n}, this );",
-  inline: "edb.$run(event,&quot;\' + $name + \'&quot;);"
-};
-Compiler._GEEK = {
-  outline: "var $name = edb.$set ( function () {\nreturn $temp;\n}, this );",
-  inline: "edb.$get(&quot;\' + $name + \'&quot;);"
-};
-Compiler._ATTREXP = /^[^\d][a-zA-Z0-9-_\.]+/;
-var FunctionCompiler = function FunctionCompiler() {
-  this._sequence = [this._validate, this._extract, this._direct, this._define, this._compile];
-  this._directives = null;
-  this._instructions = null;
-  this._params = null;
-  this._failed = false;
-};
-var $FunctionCompiler = FunctionCompiler;
-($traceurRuntime.createClass)(FunctionCompiler, {
-  compile: function(source, directives) {
-    var $__0 = this;
-    this._directives = directives || {};
-    this._params = [];
-    var head = {
-      declarations: {},
-      functiondefs: []
-    };
-    source = this._sequence.reduce((function(s, step) {
-      return step.call($__0, s, head);
-    }), source);
-    return new Result(source, this._params, this._instructions);
-  },
-  _validate: function(script) {
-    if ($FunctionCompiler._NESTEXP.test(script)) {
-      throw "Nested EDBML dysfunction";
-    }
-    return script;
-  },
-  _direct: function(script) {
-    return script;
-  },
-  _extract: function(script, head) {
-    var $__0 = this;
-    Instruction.from(script).forEach((function(pi) {
-      $__0._instructions = $__0._instructions || [];
-      $__0._instructions.push(pi);
-      $__0._instruct(pi);
-    }));
-    return Instruction.clean(script);
-  },
-  _instruct: function(pi) {
-    var type = pi.tag;
-    var atts = pi.attributes;
-    var name = atts.name;
-    switch (type) {
-      case "param":
-        this._params.push(name);
-        break;
-    }
-  },
-  _define: function(script, head) {
-    var vars = "",
-        html = "var ";
-    each(head.declarations, (function(name) {
-      vars += ", " + name;
-    }));
-    if (this._params.indexOf("out") < 0) {
-      html += "out = $function.$out, ";
-    }
-    html += "att = new edb.Att () ";
-    html += vars + ";\n";
-    head.functiondefs.forEach((function(def) {
-      html += def + "\n";
-    }));
-    return html + script;
-  },
-  _source: function(source, params) {
-    var lines = source.split("\n");
-    lines.pop();
-    var args = params.length ? "( " + params.join(", ") + " )" : "()";
-    return "function " + args + " {\n" + lines.join("\n") + "\n}";
-  }
-}, {}, Compiler);
-FunctionCompiler._NESTEXP = /<script.*type=["']?text\/edbml["']?.*>([\s\S]+?)/g;
-var ScriptCompiler = function ScriptCompiler() {
-  $traceurRuntime.superCall(this, $ScriptCompiler.prototype, "constructor", []);
-  this.inputs = Object.create(null);
-  this._sequence.splice(3, 0, this._declare);
-};
-var $ScriptCompiler = ScriptCompiler;
-($traceurRuntime.createClass)(ScriptCompiler, {
-  _instruct: function(pi) {
-    $traceurRuntime.superCall(this, $ScriptCompiler.prototype, "_instruct", [pi]);
-    var atts = pi.attributes;
-    switch (pi.tag) {
-      case "input":
-        this.inputs[atts.name] = atts.type;
-        break;
-    }
-  },
-  _declare: function(script, head) {
-    var defs = [];
-    each(this.inputs, function(name, type) {
-      head.declarations[name] = true;
-      defs.push(name + " = get ( " + type + " );\n");
-    }, this);
-    if (defs[0]) {
-      head.functiondefs.push("( function inputs ( get ) {\n" + defs.join("") + "}( this.script.inputs ));");
-    }
-    return script;
-  }
-}, {}, FunctionCompiler);
-var Instruction = function Instruction(pi) {
-  this.tag = pi.split("<?")[1].split(" ")[0];
-  this.attributes = Object.create(null);
-  var hit,
-      atexp = $Instruction._ATEXP;
-  while ((hit = atexp.exec(pi))) {
-    var n = hit[1],
-        v = hit[2];
-    this.attributes[n] = cast(v);
-  }
-};
-var $Instruction = Instruction;
-($traceurRuntime.createClass)(Instruction, {}, {});
-Instruction.from = function(source) {
-  var pis = [],
-      hit = null;
-  while ((hit = this._PIEXP.exec(source))) {
-    pis.push(new Instruction(hit[0]));
-  }
-  return pis;
-};
-Instruction.clean = function(source) {
-  return source.replace(this._PIEXP, "");
-};
-Instruction._PIEXP = /<\?.[^>?]+\?>/g;
-Instruction._ATEXP = /(\S+)=["']?((?:.(?!["']?\s+(?:\S+)=|[>"']))+.)["']?/g;
-var Runner = function Runner() {
-  this.firstline = false;
-  this.lastline = false;
-  this.firstchar = false;
-  this.lastchar = false;
-  this._line = null;
-  this._index = -1;
-};
-($traceurRuntime.createClass)(Runner, {
-  run: function(compiler, script, status, output) {
-    this._runlines(compiler, script.split("\n"), status, output);
-  },
-  ahead: function(string) {
-    var line = this._line;
-    var index = this._index;
-    var i = index + 1;
-    var l = string.length;
-    return line.length > index + l && line.substring(i, i + l) === string;
-  },
-  behind: function(string) {
-    var line = this._line;
-    var index = this._index;
-    var length = string.length,
-        start = index - length;
-    return start >= 0 && line.substr(start, length) === string;
-  },
-  lineahead: function() {
-    return this._line.substring(this._index + 1);
-  },
-  skipahead: function(string) {
-    console.error("TODO");
-  },
-  _runlines: function(compiler, lines, status, output) {
-    var $__0 = this;
-    var stop = lines.length - 1;
-    lines.forEach((function(line, index) {
-      $__0.firstline = index === 0;
-      $__0.lastline = index === stop;
-      $__0._runline(line, index, compiler, status, output);
-    }));
-  },
-  _runline: function(line, index, compiler, status, output) {
-    line = this._line = line.trim();
-    if (line.length) {
-      compiler.newline(line, this, status, output);
-      this._runchars(compiler, line.split(""), status, output);
-      compiler.endline(line, this, status, output);
-    }
-  },
-  _runchars: function(compiler, chars, status, output) {
-    var $__0 = this;
-    var stop = chars.length - 1;
-    chars.forEach((function(c, i) {
-      $__0._index = i;
-      $__0.firstchar = i === 0;
-      $__0.lastchar = i === stop;
-      compiler.nextchar(c, $__0, status, output);
-    }));
-  }
-}, {});
-var Result = function Result(body, params, instructions) {
-  this.functionstring = this._tofunctionstring(body, params);
-  this.instructionset = instructions;
-  this.errormessage = null;
-};
-($traceurRuntime.createClass)(Result, {
-  _tofunctionstring: function(body) {
-    var params = arguments[1] !== (void 0) ? arguments[1] : [];
-    try {
-      var js = new Function(params.join(","), body).toString();
-      js = js.replace(/^function anonymous/, "function $function");
-      js = js.replace(/\&quot;\&apos;/g, "&quot;");
-      return js;
-    } catch (exception) {
-      this.instructionset = null;
-      this.errormessage = exception.message;
-      return this._tofallbackstring(body, params, exception.message);
-    }
-  },
-  _tofallbackstring: function(body, params, exception) {
-    body = this._emergencyformat(body, params);
-    body = new Buffer(body).toString("base64");
-    body = "gui.BlobLoader.loadScript ( document, atob (  '" + body + "' ));\n";
-    body += "return '<p class=\"edberror\">" + exception + "</p>'";
-    return this._tofunctionstring(body);
-  },
-  _emergencyformat: function(body, params) {
-    var result = "",
-        tabs = "\t",
-        init = null,
-        last = null,
-        fixt = null,
-        hack = null;
-    body.split("\n").forEach((function(line) {
-      line = line.trim();
-      init = line[0];
-      last = line[line.length - 1];
-      fixt = line.split("//")[0].trim();
-      hack = fixt[fixt.length - 1];
-      if ((init === "}" || init === "]") && tabs !== "") {
-        tabs = tabs.slice(0, -1);
-      }
-      result += tabs + line + "\n";
-      if (last === "{" || last === "[" || hack === "{" || hack === "[") {
-        tabs += "\t";
-      }
-    }));
-    return ["function dysfunction (" + params + ") {", result, "}"].join("\n");
-  }
-}, {});
-var Status = function Status() {
-  this.mode = $Status.MODE_JS;
-  this.conf = [];
-  this.peek = false;
-  this.poke = false;
-  this.cont = false;
-  this.adds = false;
-  this.func = null;
-  this.conf = null;
-  this.curl = null;
-  this.skip = 0;
-  this.last = 0;
-  this.spot = 0;
-  this.indx = 0;
-};
-var $Status = Status;
-($traceurRuntime.createClass)(Status, {
-  gojs: function() {
-    this.mode = $Status.MODE_JS;
-  },
-  gohtml: function() {
-    this.mode = $Status.MODE_HTML;
-  },
-  gotag: function() {
-    this.mode = $Status.MODE_TAG;
-  },
-  isjs: function() {
-    return this.mode === $Status.MODE_JS;
-  },
-  ishtml: function() {
-    return this.mode === $Status.MODE_HTML;
-  },
-  istag: function() {
-    return this.mode === $Status.MODE_TAG;
-  }
-}, {});
-Status.MODE_JS = "js";
-Status.MODE_HTML = "html";
-Status.MODE_TAG = "tag";
-var Output = function Output() {
-  var body = arguments[0] !== (void 0) ? arguments[0] : "";
-  this.body = body;
-  this.temp = null;
-};
-($traceurRuntime.createClass)(Output, {}, {});
-exports.compile = function(edbml, options) {
-  if (edbml.contains("<?input")) {
-    return new ScriptCompiler().compile(edbml, options);
-  } else {
-    return new FunctionCompiler().compile(edbml, options);
-  }
-};
-
-//# sourceMappingURL=compiler-es5.js.map
