@@ -1740,6 +1740,11 @@ var $Compiler = Compiler;
         break;
       case "!":
         if (!special && runner.ahead("{")) {
+          console.error('Deprecated syntax !{} is deprecated');
+        }
+        break;
+      case "?":
+        if (!special && runner.ahead("{")) {
           status.geek = true;
           status.skip = 2;
           status.curl = 0;
@@ -1845,7 +1850,7 @@ Compiler._GEEK = {
 };
 Compiler._ATTREXP = /^[^\d][a-zA-Z0-9-_\.]+/;
 var FunctionCompiler = function FunctionCompiler() {
-  this._sequence = [this._validate, this._extract, this._direct, this._define, this._compile];
+  this._sequence = [this._uncomment, this._validate, this._extract, this._direct, this._define, this._compile];
   this._directives = null;
   this._instructions = null;
   this._params = null;
@@ -1865,6 +1870,62 @@ var $FunctionCompiler = FunctionCompiler;
       return step.call($__0, s, head);
     }), source);
     return new Result(source, this._params, this._instructions);
+  },
+  _uncomment: function(script) {
+    script = this._fisse(script, '<!--', '-->');
+    script = this._fisse(script, '/*', '*/');
+    return script;
+  },
+  _fisse: function(script, s1, s2) {
+    var a1 = s1.split('');
+    var a2 = s2.split('');
+    var c1 = a1.shift();
+    var c2 = a2.shift();
+    s1 = a1.join('');
+    s2 = a2.join('');
+    var chars = null,
+        pass = false,
+        next = false,
+        fits = (function(i, l, s) {
+          return chars.slice(i, l).join('') === s;
+        }),
+        ahead = (function(i, s) {
+          var l = s.length;
+          return fits(i, i + l, s);
+        }),
+        prevs = (function(i, s) {
+          var l = s.length;
+          return fits(i - l, i, s);
+        }),
+        start = (function(c, i) {
+          return c === c1 && ahead(i + 1, s1);
+        }),
+        stops = (function(c, i) {
+          return c === c2 && prevs(i, s2);
+        });
+    if (script.contains('<!--')) {
+      chars = script.split('');
+      return chars.map((function(chaa, i) {
+        if (pass) {
+          if (stops(chaa, i)) {
+            next = true;
+          }
+        } else {
+          if (start(chaa, i)) {
+            pass = true;
+          }
+        }
+        if (pass || next) {
+          chaa = '';
+        }
+        if (next) {
+          pass = false;
+          next = false;
+        }
+        return chaa;
+      })).join('');
+    }
+    return script;
   },
   _validate: function(script) {
     if ($FunctionCompiler._NESTEXP.test(script)) {
@@ -1921,7 +1982,7 @@ FunctionCompiler._NESTEXP = /<script.*type=["']?text\/edbml["']?.*>([\s\S]+?)/g;
 var ScriptCompiler = function ScriptCompiler() {
   $traceurRuntime.superCall(this, $ScriptCompiler.prototype, "constructor", []);
   this.inputs = Object.create(null);
-  this._sequence.splice(3, 0, this._declare);
+  this._sequence.splice(4, 0, this._declare);
 };
 var $ScriptCompiler = ScriptCompiler;
 ($traceurRuntime.createClass)(ScriptCompiler, {
