@@ -14,7 +14,7 @@ class ScriptCompiler extends FunctionCompiler {
 	constructor () {
 		super ();
 		this.inputs = Object.create ( null );
-		this._sequence.splice ( 3, 0, this._declare );
+		this._sequence.splice ( 4, 0, this._declare );
 	}
 	
 

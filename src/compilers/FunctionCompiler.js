@@ -17,6 +17,7 @@ class FunctionCompiler extends Compiler {
 		 * @type {Array<string>}
 		 */
 		this._sequence = [ 
+			this._uncomment,
 			this._validate,
 			this._extract,
 			this._direct,
@@ -70,13 +71,63 @@ class FunctionCompiler extends Compiler {
 	}
 
 
-	// Private ..............................................................................
+	// Private ...................................................................
+
+	/**
+	 * Strip HTML comments.
+	 * @param {string} script
+	 * @returns {String}
+	 */
+	_uncomment(script) {
+		script = this._stripout(script,  '<!--', '-->');
+		script = this._stripout(script, '/*','*/');
+		return script;
+	}
+
+	_stripout(script, s1, s2) {
+		let a1 = s1.split(''),
+			a2 = s2.split(''),
+			c1 = a1.shift(),
+			c2 = a2.shift();
+		s1 = a1.join('');
+		s2 = a2.join('');
+		let chars = null,
+			pass = false,
+			next = false,
+			fits = (i, l, s) => { return chars.slice(i, l).join('') === s; },
+			ahead = (i, s) => { let l = s.length; return fits(i, i + l, s); },
+			prevs = (i, s) => { let l = s.length; return fits(i - l, i, s); },
+			start = (c, i) => { return c === c1 && ahead(i + 1, s1); },
+			stops = (c, i) => { return c === c2 && prevs(i, s2); };
+		if (script.contains('<!--')) {
+			chars = script.split('');
+			return chars.map((chaa, i) => {
+				if(pass) {
+					if(stops(chaa, i)) {
+						next = true;
+					}
+				} else {
+					if(start(chaa, i)) {
+						pass = true;
+					}
+				}
+				if(pass || next) {
+					chaa = '';
+				}
+				if(next) {
+					pass = false;
+					next = false;
+				}
+				return chaa;
+			}).join('');
+		}
+		return script;
+	}
 
 	/**
 	 * Confirm no nested EDBML scripts.
 	 * @see http://stackoverflow.com/a/6322601
-	 * @param {String} script
-	 * @param {What?} head
+	 * @param {string} script
 	 * @returns {String}
 	 */
 	_validate ( script ) {

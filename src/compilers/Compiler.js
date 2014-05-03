@@ -180,6 +180,11 @@ class Compiler {
 				break;
 			case "!" :
 				if ( !special && runner.ahead ( "{" )) {
+					console.error('Deprecated syntax !{} is deprecated');
+				}
+				break;
+			case "?" :
+				if ( !special && runner.ahead ( "{" )) {
 					status.geek = true;
 					status.skip = 2;
 					status.curl = 0;

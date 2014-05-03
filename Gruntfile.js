@@ -28,8 +28,9 @@ module.exports = function ( grunt ) {
 		traceur: {
       options: {
         sourceMaps: false, // default: false,
+        blockBinding: true
       },
-      custom: {
+      compiler: {
         files:{
           "build/compiler-es5.js": [ "build/compiler-es6.js" ]
         }
@@ -74,11 +75,6 @@ module.exports = function ( grunt ) {
 		            // /(^|\n)[ \t]*('use strict'|"use strict");?\s*/g
 		        },
 					},
-				//dist: {
-					//dest: "tasks/things/compiler.js",
-					//dest:"../spiritual-tst/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
-					//dest:"../../Greenfield/Chrome/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
-					//dest:"../../Hot/hot-drums/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
 					dest: 'tasks/things/compiler.js',
 					src: [
 						'src/lib/traceur-runtime.js',
@@ -98,7 +94,10 @@ module.exports = function ( grunt ) {
 		copy: {
 			fisse: {
 				src: 'tasks/things/compiler.js',
-				dest: '../../Hot/hot-rack/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js'
+				//dest: '../../Hot/hot-rack/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js'
+				dest:"../spiritual-tst/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
+				//dest:"../../Greenfield/Chrome/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
+				//dest:"../../Hot/hot-drums/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
 			}
 		}
 	});
