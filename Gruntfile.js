@@ -41,15 +41,8 @@ module.exports = function ( grunt ) {
 					options: {
 						separator: '\n\n\n',
 					},
-				//dist: {
-					//dest: "tasks/things/compiler.js",
-					//dest:"../spiritual-tst/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
-					//dest:"../../Greenfield/Chrome/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
-					//dest:"../../Hot/hot-drums/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
 					dest: 'build/compiler-es6.js',
 					src: [
-						//"lib/traceur/runtime.js",
-						//
 						"header.js",
 						"compilers/Compiler.js",
 						"compilers/FunctionCompiler.js",
@@ -72,7 +65,6 @@ module.exports = function ( grunt ) {
 		          return '// Source: ' + filepath + '\n' +
 		            src.replace(/(^|\n)[ \t]*('use strict');?\s*/g, '$1').
 		            		replace(/(^|\n)[ \t]*("use strict");?\s*/g, '$1');
-		            // /(^|\n)[ \t]*('use strict'|"use strict");?\s*/g
 		        },
 					},
 					dest: 'tasks/things/compiler.js',
@@ -91,16 +83,17 @@ module.exports = function ( grunt ) {
 				}
 			}
 		},
+		/*
+		 * NOT A DEFAULT TASK: RUN 'grunt copy' MANUALLY!
+		 */
 		copy: {
 			fisse: {
 				src: 'tasks/things/compiler.js',
-				dest: '../../Hot/hot-rack/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js'
-				//dest:"../spiritual-tst/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
-				//dest:"../../Greenfield/Chrome/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
-				//dest:"../../Hot/hot-drums/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js",
+				dest: "../../Chrome/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js"
 			}
 		}
+		
 	});
 
-	grunt.registerTask ( "default", [ "concat:before", "traceur", "concat:after" ]);
+	grunt.registerTask ( "default", [ 'concat:before', 'traceur', 'concat:after' ]);
 };
