@@ -6,6 +6,11 @@
  * @see {ScriptCompiler}
  */
 class Compiler {
+
+	constructor() {
+		this._keyindex = 1;
+		//this._scriptid = '';
+	}
 	
 	/**
 	 * Line begins.
@@ -311,7 +316,7 @@ class Compiler {
 			spot = status.spot,
 			prev = body.substring ( 0, spot ),
 			next = body.substring ( spot ),
-			name = generateKey (); //this.uniqueid + ( this.keyindex ++ );
+			name = '$edb' + ( this._keyindex ++ ); // this._scriptid + 
 		var outl = js.outline.replace ( "$name", name ).replace ( "$temp", temp );
 		output.body = 
 			prev + "\n" + 

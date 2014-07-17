@@ -1588,7 +1588,7 @@ System.get("traceur-runtime@0.0.33/src/runtime/polyfill-import" + '');
 
 
 // Source: build/compiler-es5.js
-var __moduleName = "build/compiler-es5";
+"use strict";
 function each(object, func, thisp) {
   return Object.keys(object).map((function(key) {
     return func.call(thisp, key, object[key]);
@@ -1627,7 +1627,9 @@ var generateKey = (function() {
     return key;
   };
 }());
-var Compiler = function Compiler() {};
+var Compiler = function Compiler() {
+  this._keyindex = 1;
+};
 var $Compiler = Compiler;
 ($traceurRuntime.createClass)(Compiler, {
   newline: function(line, runner, status, output) {
@@ -1834,7 +1836,7 @@ var $Compiler = Compiler;
         spot = status.spot,
         prev = body.substring(0, spot),
         next = body.substring(spot),
-        name = generateKey();
+        name = '$edb' + (this._keyindex++);
     var outl = js.outline.replace("$name", name).replace("$temp", temp);
     output.body = prev + "\n" + outl + next + js.inline.replace("$name", name);
     status.spot += outl.length + 1;
@@ -1850,6 +1852,7 @@ Compiler._GEEK = {
 };
 Compiler._ATTREXP = /^[^\d][a-zA-Z0-9-_\.]+/;
 var FunctionCompiler = function FunctionCompiler() {
+  $traceurRuntime.superCall(this, $FunctionCompiler.prototype, "constructor", []);
   this._sequence = [this._uncomment, this._validate, this._extract, this._direct, this._define, this._compile];
   this._directives = null;
   this._instructions = null;
@@ -1858,7 +1861,7 @@ var FunctionCompiler = function FunctionCompiler() {
 };
 var $FunctionCompiler = FunctionCompiler;
 ($traceurRuntime.createClass)(FunctionCompiler, {
-  compile: function(source, directives) {
+  compile: function(source, directives, scriptid) {
     var $__0 = this;
     this._directives = directives || {};
     this._params = [];
@@ -1872,15 +1875,15 @@ var $FunctionCompiler = FunctionCompiler;
     return new Result(source, this._params, this._instructions);
   },
   _uncomment: function(script) {
-    script = this._fisse(script, '<!--', '-->');
-    script = this._fisse(script, '/*', '*/');
+    script = this._stripout(script, '<!--', '-->');
+    script = this._stripout(script, '/*', '*/');
     return script;
   },
-  _fisse: function(script, s1, s2) {
-    var a1 = s1.split('');
-    var a2 = s2.split('');
-    var c1 = a1.shift();
-    var c2 = a2.shift();
+  _stripout: function(script, s1, s2) {
+    var a1 = s1.split(''),
+        a2 = s2.split(''),
+        c1 = a1.shift(),
+        c2 = a2.shift();
     s1 = a1.join('');
     s2 = a2.join('');
     var chars = null,

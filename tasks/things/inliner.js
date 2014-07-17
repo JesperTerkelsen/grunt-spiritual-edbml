@@ -41,12 +41,13 @@ var errors = false;
 /**
  * @todo COPY-PASTE!
  * @param {String} message
- */
+ *
 function error ( message ) {
 	//grunt.log.error ( message );
 	console.error ( message );
 	errors = true;
 }
+*/
 
 /**
  *
@@ -95,12 +96,12 @@ function resolve ( html, holders ) {
  */
 function convertinline ( script, options, key, tab, id ) {
 	var js, dirs = assistant.directives ( script );
-	var result = compiler.compile ( script.html (), dirs );
-	var scriptid = id || "edb." + key;
+	var scriptid = id || ("edb." + key); // TODO: is this right (with the id)?
+	var result = compiler.compile ( script.html (), dirs ); // "edb" + key
 	js = assistant.declare ( scriptid, result );
 	js = options.beautify ? formatter.beautify ( js, tab, true ) : formatter.uglify ( js );
 	script.html ( placeholder ( key )).removeAttr ( "type" );
-	if(!id) {
+	if(!id) { // TODO: should gui.scriptid always be present? Think about this!
 		script.addClass ( "gui-script" );
 		script.attr ( "gui.scriptid", scriptid );
 	}

@@ -12,6 +12,8 @@ class FunctionCompiler extends Compiler {
 	 */
 	constructor () {
 
+		super();
+
 		/**
 		 * Compile sequence.
 		 * @type {Array<string>}
@@ -57,8 +59,9 @@ class FunctionCompiler extends Compiler {
 	 * @param {Map<String,String} directives
 	 * @returns {Result}
 	 */
-	compile ( source, directives ) {
+	compile ( source, directives, scriptid ) {
 		this._directives = directives || {};
+		//this._scriptid = scriptid; // DEPRECATED
 		this._params = [];
 		var head = {
 			declarations : {}, // Map<String,boolean>
