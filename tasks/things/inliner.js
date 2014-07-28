@@ -1,6 +1,7 @@
 "use strict";
 
 var cheerio = require ( "cheerio" );
+var chalk = require('chalk');
 var compiler = require ( "./compiler" );
 var formatter = require ( "./formatter" );
 var assistant = require ( "./assistant" );
@@ -11,7 +12,7 @@ var assistant = require ( "./assistant" );
  * @param {Map<String,String>} options
  */
 exports.process = function ( grunt, files, options ) {
-	errors = false;
+	errors = false; 
 	if ( Array.isArray ( files )) {
 		var sources = grunt.file.expand ( files );
 		var results = trawlinline ( grunt, sources, options );
@@ -19,8 +20,9 @@ exports.process = function ( grunt, files, options ) {
 			Object.keys ( results ).forEach ( function ( src ) {
 				var file = rename ( src, options );
 				var text = results [ src ];
+				file = grunt.template.process(file);
 				grunt.file.write ( file, text );
-				grunt.log.writeln ( "File \"" + file + "\" created." );
+				grunt.log.writeln ( "File \"" + chalk.cyan(file) + "\" created." );
 			});
 		}
 	} else {
