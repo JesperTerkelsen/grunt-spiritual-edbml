@@ -1,3 +1,5 @@
+"use strict";
+
 var beautyfier = require ( "esformatter" );
 var uglifier = require ( "uglify-js" );
 
@@ -29,7 +31,7 @@ exports.uglify = function ( js ) {
       warnings: false
     }
   }).code;
-}
+};
 
 
 // Private ...............................

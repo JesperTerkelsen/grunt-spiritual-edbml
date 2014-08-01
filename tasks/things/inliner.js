@@ -5,24 +5,29 @@ var chalk = require('chalk');
 var compiler = require ( "./compiler" );
 var formatter = require ( "./formatter" );
 var assistant = require ( "./assistant" );
+var path = require('path');
 
 /**
  * @param {Grunt} grunt
  * @param {Map<String,String>} files
  * @param {Map<String,String>} options
  */
-exports.process = function ( grunt, files, options ) {
-	errors = false; 
+exports.process = function ( grunt, files, dest, options ) {
+	errors = false;
 	if ( Array.isArray ( files )) {
 		var sources = grunt.file.expand ( files );
 		var results = trawlinline ( grunt, sources, options );
 		if ( !errors ) {
 			Object.keys ( results ).forEach ( function ( src ) {
-				var file = rename ( src, options );
-				var text = results [ src ];
-				file = grunt.template.process(file);
-				grunt.file.write ( file, text );
-				grunt.log.writeln ( "File \"" + chalk.cyan(file) + "\" created." );
+				var source = src;
+				var text = results [ src ], target = rename(src, options);
+				if(dest) {
+					target = path.normalize(dest + target.substring(target.indexOf('/')));
+				}
+				target = grunt.template.process(target);
+				text = options.process ? options.process(text, source, target) : text;
+				grunt.file.write ( target, text );
+				grunt.log.writeln ( "File \"" + chalk.cyan(target) + "\" created." );
 			});
 		}
 	} else {
@@ -44,9 +49,8 @@ var errors = false;
  * @todo COPY-PASTE!
  * @param {String} message
  *
-function error ( message ) {
-	//grunt.log.error ( message );
-	console.error ( message );
+function error ( grunt, message ) {
+	grunt.log.error ( message );
 	errors = true;
 }
 */
