@@ -1,6 +1,7 @@
 "use strict";
 
 var cheerio = require ( "cheerio" );
+var chalk = require('chalk');
 var compiler = require ( "./compiler" );
 var formatter = require ( "./formatter" );
 var assistant = require ( "./assistant" );
@@ -20,8 +21,9 @@ exports.process = function ( grunt, files, options ) {
 			var results = trawloutline ( grunt, sources, options );
 			if ( results.length && !errors ) {
 				var text = formatter.beautify ( results );
+				target = grunt.template.process(target);
 				grunt.file.write ( target, text );
-				grunt.log.writeln ( "Generated " + target );
+				grunt.log.writeln ( "File " + chalk.cyan(target) + ' created.');
 			}
 		});
 	} else {
