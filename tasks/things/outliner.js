@@ -12,8 +12,9 @@ var path = require ( "path" );
  * @param {Grunt} grunt
  * @param {Map<String,String} files
  * @param {Map<String,String} options
+ * @param {function} done
  */
-exports.process = function ( grunt, files, options ) {
+exports.process = function ( grunt, files, options, done ) {
 	errors = false;
 	if ( !Array.isArray ( files )) {
 		Object.keys ( files ).forEach ( function ( target ) {
@@ -26,6 +27,7 @@ exports.process = function ( grunt, files, options ) {
 				grunt.log.writeln ( "File " + chalk.cyan(target) + ' created.');
 			}
 		});
+		done();
 	} else {
 		grunt.log.error ( "Object expected" );
 	}
