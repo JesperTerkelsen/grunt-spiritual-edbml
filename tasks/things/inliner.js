@@ -1,10 +1,10 @@
-"use strict";
+'use strict';
 
-var cheerio = require ( "cheerio" );
+var cheerio = require ( 'cheerio' );
 var chalk = require('chalk');
-var compiler = require ( "./compiler" );
-var formatter = require ( "./formatter" );
-var assistant = require ( "./assistant" );
+var compiler = require ( './compiler' );
+var formatter = require ( './formatter' );
+var assistant = require ( './assistant' );
 var path = require('path');
 
 /**
@@ -13,76 +13,84 @@ var path = require('path');
  * @param {Map<String,String>} options
  * @param {function} done
  */
-exports.process = function ( grunt, files, dest, options, done ) {
-	errors = false;
-	if ( Array.isArray ( files )) {
-		var sources = grunt.file.expand ( files );
-		var results = trawlinline ( grunt, sources, options );
-		if ( !errors ) {
-			Object.keys ( results ).forEach ( function ( src ) {
-				var source = src;
-				var text = results [ src ], target = rename(src, options);
-				if(dest) {
-					target = path.normalize(dest + target.substring(target.indexOf('/')));
-				}
-				target = grunt.template.process(target);
-				text = options.process ? options.process(text, source, target) : text;
-				grunt.file.write ( target, text );
-				grunt.log.writeln ( "File \"" + chalk.cyan(target) + "\" created." );
-			});
-		}
-		done();
-	} else {
-		grunt.log.error ( "Array expected" );
-	}
+exports.process = function ( grunt, files, options, done ) {
+	var dest, isExpandedPair;	
+	files.forEach(function(filePair) {
+		isExpandedPair = filePair.orig.expand || false;
+		filePair.src.forEach(function(src) {
+			if (detectDestType(grunt, filePair.dest) === 'directory') {
+				dest = (isExpandedPair) ? filePair.dest : unixifyPath(path.join(filePair.dest, src));
+			} else {
+				dest = filePair.dest;
+			}
+			dest = rename(dest, options);
+			if(src !== dest) {
+				spastiker(grunt, src, dest, options);
+			} else {
+				grunt.log.error('Src and dest conflict', src, dest);
+			}
+		});
+	});
 };
 
 
-// Private ...................................................
+// Private .....................................................................
 
-/**
- * @todo COPY-PASTE!
- * Flip to abort file system updates.
- * @type {boolean}
- */
-var errors = false;
-
-/**
- * @todo COPY-PASTE!
- * @param {String} message
- *
-function error ( grunt, message ) {
-	grunt.log.error ( message );
-	errors = true;
+function detectDestType(grunt, dest) {
+	if (grunt.util._.endsWith(dest, '/')) {
+		return 'directory';
+	} else {
+		return 'file';
+	}
 }
-*/
+
+
+function unixifyPath(filepath) {
+	if (false) { //process.platform === 'win32'
+		return filepath.replace(/\\/g, '/');
+	} else {
+		return filepath;
+	}
+}
 
 /**
- *
+ * @param {Grunt} grunt
+ * @param {string} src
+ * @param {Map} options
+ * @returns {string}
  */
-function trawlinline ( grunt, sources, options ) {
-	var results = {};
-	sources.forEach ( function ( src ) {
-		var txt = grunt.file.read ( src );
-		var holders = {}, $ = cheerio.load ( txt );
-		$ ( "script" ).each ( function ( i, script ) {
-			script = $ ( script );
-			if ( script.attr ( "type" ) === "text/edbml" ) {
-				var id = script.attr ( "id" );
-				var key = id || assistant.unique ( src, i );
-				var tab = tabbing ( script );
-				holders [ key ] = convertinline ( 
-					script, options, key, tab, id
-				);
-			}
-		});
-		if ( Object.keys ( holders ).length ) {
-			results [ src ] = resolve ( $.html (), holders );
-		} else {
-			results [ src ] = $.html ();
+function spastiker(grunt, src, dest, options) {
+	var txt = pikodder(grunt, src, options);
+	txt = options.process ? options.process(txt, src, dest) : txt;
+	grunt.file.write(dest, txt);
+	grunt.log.writeln ( 'File "' + chalk.cyan(dest) + '" created.' );
+}
+
+/**
+ * @param {Grunt} grunt
+ * @param {string} src
+ * @param {Map} options
+ * @returns {string}
+ */
+function pikodder(grunt, src, options) {
+	var txt = grunt.file.read ( src );
+	var holders = {}, $ = cheerio.load ( txt );
+	$ ( 'script' ).each ( function ( i, script ) {
+		script = $ ( script );
+		if ( script.attr ( 'type' ) === 'text/edbml' ) {
+			var id = script.attr ( 'id' );
+			var key = id || assistant.unique ( src, i );
+			var tab = tabbing ( script );
+			holders [ key ] = convertinline ( 
+				script, options, key, tab, id
+			);
 		}
 	});
-	return results;
+	if ( Object.keys ( holders ).length ) {
+		return resolve ( $.html (), holders );
+	} else {
+		return $.html ();
+	}
 }
 
 /**
@@ -104,14 +112,14 @@ function resolve ( html, holders ) {
  */
 function convertinline ( script, options, key, tab, id ) {
 	var js, dirs = assistant.directives ( script );
-	var scriptid = id || ("edb." + key); // TODO: is this right (with the id)?
-	var result = compiler.compile ( script.html (), dirs ); // "edb" + key
+	var scriptid = id || ('edb.' + key); // TODO: is this right (with the id)?
+	var result = compiler.compile ( script.html (), dirs ); // 'edb' + key
 	js = assistant.declare ( scriptid, result );
 	js = options.beautify ? formatter.beautify ( js, tab, true ) : formatter.uglify ( js );
-	script.html ( placeholder ( key )).removeAttr ( "type" );
+	script.html ( placeholder ( key )).removeAttr ( 'type' );
 	if(!id) { // TODO: should gui.scriptid always be present? Think about this!
-		script.addClass ( "gui-script" );
-		script.attr ( "gui.scriptid", scriptid );
+		script.addClass ( 'gui-script' );
+		script.attr ( 'gui.scriptid', scriptid );
 	}
 	return js;
 }
@@ -123,8 +131,8 @@ function convertinline ( script, options, key, tab, id ) {
  * @returns {String}
  */
 function rename ( filepath, options ) {
-	var base = filepath.substr ( 0, filepath.lastIndexOf ( "." ));
-	return base + ( options.extname || ".html" );
+	var base = filepath.substr ( 0, filepath.lastIndexOf ( '.' ));
+	return base + ( options.extname || '.html' );
 }
 
 /**
@@ -133,7 +141,7 @@ function rename ( filepath, options ) {
  * @returns {String}
  */
 function placeholder ( key ) {
-	return "${" + key + "}";
+	return '${' + key + '}';
 }
 
 /**
@@ -146,9 +154,9 @@ function tabbing ( script ) {
 	var prev, data;
 	script = script [ 0 ];
 	if (( prev = script.prev ) && ( data = prev.data )) {
-		return data.replace ( /\n/g, "" );
+		return data.replace ( /\n/g, '' );
 	} 
-	return "";
+	return '';
 }
 
 /**
@@ -158,6 +166,6 @@ function tabbing ( script ) {
  * @returns {String}
  *
 function namedfunction ( js, name ) {
-	return js.replace ( /^function/, "function " + ( name || "" ));
+	return js.replace ( /^function/, 'function ' + ( name || '' ));
 }
 */
