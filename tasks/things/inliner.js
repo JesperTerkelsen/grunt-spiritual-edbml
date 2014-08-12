@@ -31,6 +31,7 @@ exports.process = function ( grunt, files, options, done ) {
 			}
 		});
 	});
+	done();
 };
 
 
