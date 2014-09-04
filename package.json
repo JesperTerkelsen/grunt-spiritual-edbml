@@ -1,7 +1,7 @@
 {
   "name": "grunt-spiritual-edbml",
   "description": "Compile EDBML",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "dependencies": {
     "chalk": "^0.5.1",
     "cheerio": "~0.12.3",

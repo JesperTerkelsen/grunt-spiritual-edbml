@@ -119,8 +119,9 @@ function convertinline ( script, options, key, tab, id ) {
 	js = options.beautify ? formatter.beautify ( js, tab, true ) : formatter.uglify ( js );
 	script.html ( placeholder ( key )).removeAttr ( 'type' );
 	if(!id) { // TODO: should gui.scriptid always be present? Think about this!
-		script.addClass ( 'gui-script' );
-		script.attr ( 'gui.scriptid', scriptid );
+		script.addClass ( "gui-script" );
+		var att = options.attribute || 'gui';
+		script.attr ( att + ".scriptid", scriptid );
 	}
 	return js;
 }
