@@ -8,7 +8,7 @@ class Output {
 	/**
 	 * @param @optional {String} body
 	 */
-	constructor ( body = "" ) {
+	constructor(body = "") {
 		this.body = body;
 		this.temp = null
 	}

@@ -59,3 +59,30 @@ var generateKey = ( function () {
 		return key;
 	};
 }());
+
+/**
+ * What? This is wrong on so many.
+ * @param {string} string
+ * @returns {boolean}
+ */
+String.prototype.contains = function (string) {
+	return this.indexOf(string) > -1;
+};
+
+/**
+ * Come on.
+ * @param {string} string
+ * @returns {boolean}
+ */
+String.prototype.startsWith = function (string) {
+	return this.indexOf(string) === 0;
+};
+
+/**
+ * Again? That's it. Good luck.
+ * @param {string} string
+ * @returns {boolean}
+ */
+String.prototype.endsWith = function (string) {
+	return this.indexOf(string) === this.length - 1;
+};

@@ -3,14 +3,14 @@
 /**
  * Compiling EDBML source to JavaScript.
  * @extends {Compiler}
- * @TODO precompiler to strip out both JS comments and HTML comments.
+ * TODO: precompiler to strip out both JS comments and HTML comments.
  */
 class FunctionCompiler extends Compiler {
-	
+
 	/**
 	 * Construction time again.
 	 */
-	constructor () {
+	constructor() {
 
 		super();
 
@@ -18,7 +18,7 @@ class FunctionCompiler extends Compiler {
 		 * Compile sequence.
 		 * @type {Array<string>}
 		 */
-		this._sequence = [ 
+		this._sequence = [
 			this._uncomment,
 			this._validate,
 			this._extract,
@@ -28,7 +28,7 @@ class FunctionCompiler extends Compiler {
 		];
 
 		/**
-		 * Mapping script tag attributes. 
+		 * Mapping script tag attributes.
 		 * This may be put to future use.
 		 * @type {HashMap<String,String>}
 		 */
@@ -41,7 +41,7 @@ class FunctionCompiler extends Compiler {
 		this._instructions = null;
 
 		/**
-		 * Compiled function arguments list. 
+		 * Compiled function arguments list.
 		 * @type {Array<String>}
 		 */
 		this._params = null;
@@ -52,25 +52,24 @@ class FunctionCompiler extends Compiler {
 		 */
 		this._failed = false;
 	}
-		
+
 	/**
 	 * Compile source to invocable function.
 	 * @param {String} source
 	 * @param {Map<String,String} directives
 	 * @returns {Result}
 	 */
-	compile ( source, directives, scriptid ) {
+	compile(source, directives, scriptid) {
 		this._directives = directives || {};
-		//this._scriptid = scriptid; // DEPRECATED
 		this._params = [];
 		var head = {
-			declarations : {}, // Map<String,boolean>
-			functiondefs : [] // Array<String>
+			declarations: {}, // Map<String,boolean>
+			functiondefs: [] // Array<String>
 		};
-		source = this._sequence.reduce (( s, step ) => {
-			return step.call ( this, s, head );
-		}, source );
-		return new Result ( source, this._params, this._instructions );
+		source = this._sequence.reduce((s, step) => {
+			return step.call(this, s, head);
+		}, source);
+		return new Result(source, this._params, this._instructions);
 	}
 
 
@@ -82,8 +81,8 @@ class FunctionCompiler extends Compiler {
 	 * @returns {String}
 	 */
 	_uncomment(script) {
-		script = this._stripout(script,  '<!--', '-->');
-		script = this._stripout(script, '/*','*/');
+		script = this._stripout(script, '<!--', '-->');
+		script = this._stripout(script, '/*', '*/');
 		return script;
 	}
 
@@ -97,27 +96,39 @@ class FunctionCompiler extends Compiler {
 		let chars = null,
 			pass = false,
 			next = false,
-			fits = (i, l, s) => { return chars.slice(i, l).join('') === s; },
-			ahead = (i, s) => { let l = s.length; return fits(i, i + l, s); },
-			prevs = (i, s) => { let l = s.length; return fits(i - l, i, s); },
-			start = (c, i) => { return c === c1 && ahead(i + 1, s1); },
-			stops = (c, i) => { return c === c2 && prevs(i, s2); };
+			fits = (i, l, s) => {
+				return chars.slice(i, l).join('') === s;
+			},
+			ahead = (i, s) => {
+				let l = s.length;
+				return fits(i, i + l, s);
+			},
+			prevs = (i, s) => {
+				let l = s.length;
+				return fits(i - l, i, s);
+			},
+			start = (c, i) => {
+				return c === c1 && ahead(i + 1, s1);
+			},
+			stops = (c, i) => {
+				return c === c2 && prevs(i, s2);
+			};
 		if (script.contains('<!--')) {
 			chars = script.split('');
 			return chars.map((chaa, i) => {
-				if(pass) {
-					if(stops(chaa, i)) {
+				if (pass) {
+					if (stops(chaa, i)) {
 						next = true;
 					}
 				} else {
-					if(start(chaa, i)) {
+					if (start(chaa, i)) {
 						pass = true;
 					}
 				}
-				if(pass || next) {
+				if (pass || next) {
 					chaa = '';
 				}
-				if(next) {
+				if (next) {
 					pass = false;
 					next = false;
 				}
@@ -133,8 +144,8 @@ class FunctionCompiler extends Compiler {
 	 * @param {string} script
 	 * @returns {String}
 	 */
-	_validate ( script ) {
-		if ( FunctionCompiler._NESTEXP.test ( script )) {
+	_validate(script) {
+		if (FunctionCompiler._NESTEXP.test(script)) {
 			throw "Nested EDBML dysfunction";
 		}
 		return script;
@@ -145,36 +156,36 @@ class FunctionCompiler extends Compiler {
 	 * @param  {String} script
 	 * @returns {String}
 	 */
-	_direct ( script ) {
+	_direct(script) {
 		return script;
 	}
-	
+
 	/**
 	 * Extract and evaluate processing instructions.
 	 * @param {String} script
 	 * @param {What?} head
 	 * @returns {String}
 	 */
-	_extract ( script, head ) {
-		Instruction.from ( script ).forEach (( pi ) => {
+	_extract(script, head) {
+		Instruction.from(script).forEach((pi) => {
 			this._instructions = this._instructions || [];
-			this._instructions.push ( pi );
-			this._instruct ( pi );
+			this._instructions.push(pi);
+			this._instruct(pi);
 		});
-		return Instruction.clean ( script );
+		return Instruction.clean(script);
 	}
 
 	/**
 	 * Evaluate processing instruction.
 	 * @param {Instruction} pi
 	 */
-	_instruct ( pi ) {
+	_instruct(pi) {
 		var type = pi.tag;
 		var atts = pi.attributes;
 		var name = atts.name;
-		switch ( type ) {
-			case "param" :
-				this._params.push ( name );
+		switch (type) {
+			case "param":
+				this._params.push(name);
 				break;
 		}
 	}
@@ -185,44 +196,43 @@ class FunctionCompiler extends Compiler {
 	 * @param {What?} head
 	 * @returns {String}
 	 */
-	_define ( script, head ) {
-		var vars = "", html = "var ";
-		each ( head.declarations, ( name ) => {
+	_define(script, head) {
+		var vars = "",
+			html = "var ";
+		each(head.declarations, (name) => {
 			vars += ", " + name;
 		});
 
-		if ( this._params.indexOf ( "out" ) < 0 ) {
-			//html += "out = new edb.Out (), ";
+		if (this._params.indexOf("out") < 0) {
 			html += "out = $function.$out, ";
 		}
-
-		//if ( this._params.indexOf ( "att" ) < 0 ) {
-			html += "att = new edb.Att () ";
-		//}
+		html += "att = new edb.Att() ";
 		html += vars + ";\n";
-		head.functiondefs.forEach (( def ) => {
-			html += def +"\n";
+		head.functiondefs.forEach((def) => {
+			html += def + "\n";
 		});
 		return html + script;
 	}
-	
+
 	/**
 	 * Compute full script source (including arguments) for debugging stuff.
 	 * @returns {String}
 	 */
-	_source ( source, params ) {
-		var lines = source.split ( "\n" ); lines.pop (); // empty line :/
-		var args = params.length ? "( " + params.join ( ", " ) + " )" : "()";
-		return "function " + args + " {\n" + lines.join ( "\n" ) + "\n}";
+	_source(source, params) {
+		var lines = source.split("\n");
+		lines.pop(); // empty line :/
+		var args = params.length ? "( " + params.join(", ") + " )" : "()";
+		return "function " + args + " {\n" + lines.join("\n") + "\n}";
 	}
 
 }
 
-// Static ..................................................................................
+// Static ......................................................................
 
 /**
- * RegExp used to validate no nested scripts. Important back when all this was a clientside 
- * framework because the browser can't parse nested scripts, nowadays it might be practical?
+ * RegExp used to validate no nested scripts. Important back when all this was a 
+ * clientside framework because the browser can't parse nested scripts, nowadays
+ * it might be practical?
  * http://stackoverflow.com/questions/1441463/how-to-get-regex-to-match-multiple-script-tags
  * http://stackoverflow.com/questions/1750567/regex-to-get-attributes-and-body-of-script-tags
  * TODO: stress test for no SRC attribute!
