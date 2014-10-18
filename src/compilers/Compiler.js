@@ -1,7 +1,8 @@
 "use strict";
 
 /**
- * Compiler base. Mostly just so we can split the logic into more files.
+ * Compiler base. Mostly just so we can spli the logic into more files.
+ * Note to self: Conceptualize peek|poke|geek|passout|lockout
  * @see {FunctionCompiler}
  * @see {ScriptCompiler}
  */
@@ -107,7 +108,7 @@ class Compiler {
 				}
 				break;
 			case "@":
-				this._scriptatt(runner, status, output);
+				// handled by the @ macro
 				break;
 		}
 	}
@@ -217,30 +218,6 @@ class Compiler {
 	}
 
 	/*
-	 * Parse @ notation in JS.
-	 * TODO: preserve email address and allow same-line @
-	 * @param {String} line
-	 * @param {number} i
-	 */
-	_scriptatt(runner, status, output) {
-		var attr = Compiler._ATTREXP;
-		var rest, name;
-		if (runner.behind("@")) {} else if (runner.ahead("@")) {
-			output.body += "var att = new Att();";
-			status.skip = 2;
-		} else {
-			rest = runner.lineahead();
-			name = attr.exec(rest)[0];
-			if (name) {
-				output.body += rest.replace(name, "att['" + name + "']");
-				status.skip = rest.length + 1;
-			} else {
-				throw "Bad @name: " + rest;
-			}
-		}
-	}
-
-	/*
 	 * Parse @ notation in HTML.
 	 * @param {String} line
 	 * @param {number} i
@@ -252,13 +229,13 @@ class Compiler {
 			console.error("todo");
 		}
 		else if (runner.ahead("@")) {
-			output.body += "' + att._all () + '";
+			output.body += "' + $att.$all() + '";
 			status.skip = 2;
 		} else {
 			rest = runner.lineahead();
 			name = attr.exec(rest)[0];
 			dels = runner.behind("-");
-			what = dels ? "att._pop" : "att._out";
+			what = dels ? "$att.$pop" : "$att.$html";
 			output.body = dels ? output.body.substring(0, output.body.length - 1) : output.body;
 			output.body += "' + " + what + " ( '" + name + "' ) + '";
 			status.skip = name.length + 1;
@@ -271,7 +248,7 @@ class Compiler {
 	 * @param {Output} output
 	 */
 	_poke(status, output) {
-		this._inject(status, output, Compiler._POKE);
+		this._injectcombo(status, output, Compiler._POKE);
 	}
 
 	/**
@@ -280,7 +257,7 @@ class Compiler {
 	 * @param {Output} output
 	 */
 	_geek(status, output) {
-		this._inject(status, output, Compiler._GEEK);
+		this._injectcombo(status, output, Compiler._GEEK);
 	}
 
 	/**
@@ -289,13 +266,13 @@ class Compiler {
 	 * @param {Output} output
 	 * @param {Map<String,String>} js
 	 */
-	_inject(status, output, js) {
+	_injectcombo(status, output, js) {
 		var body = output.body,
 			temp = output.temp,
 			spot = status.spot,
 			prev = body.substring(0, spot),
 			next = body.substring(spot),
-			name = '$edb' + (this._keyindex++); // this._scriptid + 
+			name = '$edb' + (this._keyindex++);
 		var outl = js.outline.replace("$name", name).replace("$temp", temp);
 		output.body =
 			prev + "\n" +

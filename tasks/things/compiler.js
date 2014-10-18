@@ -1,7 +1,7 @@
 "use strict";
 // Source: build/compiler-es5.js
 /**
- * Call function for each own key in object (exluding the prototype stuff) 
+ * Call function for each own key in object (exluding the prototype stuff)
  * with key and value as arguments. Returns array of function call results.
  * @param {object} object
  * @param {function} func
@@ -13,8 +13,8 @@ function each(object, func, thisp) {
   });
 }
 /**
- * Autocast string to an inferred type. "123" returns a number 
- * while "true" and false" return a boolean. Empty string evals 
+ * Autocast string to an inferred type. "123" returns a number
+ * while "true" and false" return a boolean. Empty string evals
  * to `true` in order to support HTML attribute minimization.
  * @param {String} string
  * @returns {object}
@@ -139,10 +139,11 @@ var Compiler = function () {
         status.spot = output.body.length - 1;
         output.body += 'out.html += \'';
       }
-      break;
-    case '@':
-      this._scriptatt(runner, status, output);
-      break;
+      break;  /* moved to macro...
+			case "@":
+				this._scriptatt(runner, status, output);
+				break;
+			*/
     }
   };
   Compiler.prototype._compilehtml = function (c, runner, status, output) {
@@ -233,24 +234,6 @@ var Compiler = function () {
       break;
     }
   };
-  Compiler.prototype._scriptatt = function (runner, status, output) {
-    var attr = Compiler._ATTREXP;
-    var rest, name;
-    if (runner.behind('@')) {
-    } else if (runner.ahead('@')) {
-      output.body += 'var att = new Att();';
-      status.skip = 2;
-    } else {
-      rest = runner.lineahead();
-      name = attr.exec(rest)[0];
-      if (name) {
-        output.body += rest.replace(name, 'att[\'' + name + '\']');
-        status.skip = rest.length + 1;
-      } else {
-        throw 'Bad @name: ' + rest;
-      }
-    }
-  };
   Compiler.prototype._htmlatt = function (runner, status, output) {
     var attr = Compiler._ATTREXP;
     var rest, name, dels, what;
@@ -258,27 +241,26 @@ var Compiler = function () {
     } else if (runner.behind('#{')) {
       console.error('todo');
     } else if (runner.ahead('@')) {
-      output.body += '\' + att._all () + \'';
+      output.body += '\' + $att.$all() + \'';
       status.skip = 2;
     } else {
       rest = runner.lineahead();
       name = attr.exec(rest)[0];
       dels = runner.behind('-');
-      what = dels ? 'att._pop' : 'att._out';
+      what = dels ? '$att.$pop' : '$att.$html';
       output.body = dels ? output.body.substring(0, output.body.length - 1) : output.body;
       output.body += '\' + ' + what + ' ( \'' + name + '\' ) + \'';
       status.skip = name.length + 1;
     }
   };
   Compiler.prototype._poke = function (status, output) {
-    this._inject(status, output, Compiler._POKE);
+    this._injectcombo(status, output, Compiler._POKE);
   };
   Compiler.prototype._geek = function (status, output) {
-    this._inject(status, output, Compiler._GEEK);
+    this._injectcombo(status, output, Compiler._GEEK);
   };
-  Compiler.prototype._inject = function (status, output, js) {
+  Compiler.prototype._injectcombo = function (status, output, js) {
     var body = output.body, temp = output.temp, spot = status.spot, prev = body.substring(0, spot), next = body.substring(spot), name = '$edb' + this._keyindex++;
-    // this._scriptid + 
     var outl = js.outline.replace('$name', name).replace('$temp', temp);
     output.body = prev + '\n' + outl + next + js.inline.replace('$name', name);
     status.spot += outl.length + 1;
@@ -315,20 +297,30 @@ var FunctionCompiler = function (Compiler) {
     Compiler.call(this);
     /**
 		 * Compile sequence.
-		 * @type {Array<string>}
+		 * @type {Array<function>}
 		 */
     this._sequence = [
       this._uncomment,
       this._validate,
       this._extract,
       this._direct,
-      this._define,
-      this._compile
+      this._definehead,
+      this._injecthead,
+      this._compile,
+      this._macromize
     ];
+    /**
+		 * Hm.
+		 */
+    this._options = null;
+    /**
+		 * Hm.
+		 */
+    this._macros = null;
     /**
 		 * Mapping script tag attributes.
 		 * This may be put to future use.
-		 * @type {HashMap<String,String>}
+		 * @type {Map<string,string>}
 		 */
     this._directives = null;
     /**
@@ -338,7 +330,7 @@ var FunctionCompiler = function (Compiler) {
     this._instructions = null;
     /**
 		 * Compiled function arguments list.
-		 * @type {Array<String>}
+		 * @type {Array<string>}
 		 */
     this._params = null;
     /**
@@ -355,16 +347,14 @@ var FunctionCompiler = function (Compiler) {
       configurable: true
     }
   });
-  FunctionCompiler.prototype.compile = function (source, directives, scriptid) {
+  FunctionCompiler.prototype.compile = function (source, options, macros, directives) {
     this._directives = directives || {};
+    this._options = options || {};
+    this._macros = macros;
     this._params = [];
-    var head = {
-      declarations: {},
-      // Map<String,boolean>
-      functiondefs: []  // Array<String>
-    };
+    this._head = {};
     source = this._sequence.reduce(function (s, step) {
-      return step.call(this, s, head);
+      return step.call(this, s);
     }.bind(this), source);
     return new Result(source, this._params, this._instructions);
   };
@@ -423,7 +413,7 @@ var FunctionCompiler = function (Compiler) {
   FunctionCompiler.prototype._direct = function (script) {
     return script;
   };
-  FunctionCompiler.prototype._extract = function (script, head) {
+  FunctionCompiler.prototype._extract = function (script) {
     Instruction.from(script).forEach(function (pi) {
       this._instructions = this._instructions || [];
       this._instructions.push(pi);
@@ -433,7 +423,7 @@ var FunctionCompiler = function (Compiler) {
   };
   FunctionCompiler.prototype._instruct = function (pi) {
     var type = pi.tag;
-    var atts = pi.attributes;
+    var atts = pi.att;
     var name = atts.name;
     switch (type) {
     case 'param':
@@ -441,20 +431,21 @@ var FunctionCompiler = function (Compiler) {
       break;
     }
   };
-  FunctionCompiler.prototype._define = function (script, head) {
-    var vars = '', html = 'var ';
-    each(head.declarations, function (name) {
-      vars += ', ' + name;
-    });
+  FunctionCompiler.prototype._definehead = function (script) {
     if (this._params.indexOf('out') < 0) {
-      html += 'out = $function.$out, ';
+      this._head.out = '$edbml.__$out__';
     }
-    html += 'att = new edb.Att() ';
-    html += vars + ';\n';
-    head.functiondefs.forEach(function (def) {
-      html += def + '\n';
-    });
-    return html + script;
+    this._head.__$att__ = '$edbml.__$att__';
+    return script;
+  };
+  FunctionCompiler.prototype._injecthead = function (script, head) {
+    return 'var ' + each(this._head, function (name, value) {
+      return name + ' = ' + value;
+    }).join(',') + ';' + script;
+  };
+  FunctionCompiler.prototype._macromize = function (script) {
+    var macros = this._macros;
+    return (macros ? macros.compile(script) : script).replace(/__\$out__/g, '$out').replace(/__\$att__/g, '$att');
   };
   FunctionCompiler.prototype._source = function (source, params) {
     var lines = source.split('\n');
@@ -479,8 +470,7 @@ FunctionCompiler._NESTEXP = /<script.*type=["']?text\/edbml["']?.*>([\s\S]+?)/g;
 var ScriptCompiler = function (FunctionCompiler) {
   function ScriptCompiler() {
     FunctionCompiler.call(this);
-    this.inputs = Object.create(null);
-    this._sequence.splice(4, 0, this._declare);
+    this.inputs = {};
   }
   ScriptCompiler.prototype = Object.create(FunctionCompiler.prototype, {
     constructor: {
@@ -492,22 +482,18 @@ var ScriptCompiler = function (FunctionCompiler) {
   });
   ScriptCompiler.prototype._instruct = function (pi) {
     FunctionCompiler.prototype._instruct.call(this, pi);
-    var atts = pi.attributes;
+    var atts = pi.att;
     switch (pi.tag) {
     case 'input':
       this.inputs[atts.name] = atts.type;
       break;
     }
   };
-  ScriptCompiler.prototype._declare = function (script, head) {
-    var defs = [];
+  ScriptCompiler.prototype._definehead = function (script) {
+    script = FunctionCompiler.prototype._definehead.call(this, script);
     each(this.inputs, function (name, type) {
-      head.declarations[name] = true;
-      defs.push(name + ' = get(' + type + ');\n');
-    }, this);
-    if (defs[0]) {
-      head.functiondefs.push('(function inputs(get) {\n' + defs.join('') + '}(this.script.inputs));');
-    }
+      this._head[name] = '$edbml.$input(' + type + ')';
+    }.bind(this), this);
     return script;
   };
   return ScriptCompiler;
@@ -516,11 +502,11 @@ var Instruction = function () {
   function Instruction(pi) {
     this.tag = pi.split('<?')[1].split(' ')[0];
     // TODO: regexp this
-    this.attributes = Object.create(null);
+    this.att = Object.create(null);
     var hit, atexp = Instruction._ATEXP;
     while (hit = atexp.exec(pi)) {
       var n = hit[1], v = hit[2];
-      this.attributes[n] = cast(v);
+      this.att[n] = cast(v);
     }
   }
   return Instruction;
@@ -625,7 +611,7 @@ var Result = function () {
       params = [];
     try {
       var js = new Function(params.join(','), body).toString();
-      js = js.replace(/^function anonymous/, 'function $function');
+      js = js.replace(/^function anonymous/, 'function $edbml');
       js = js.replace(/\&quot;\&apos;/g, '&quot;');
       return js;
     } catch (exception) {
@@ -717,14 +703,14 @@ var Output = function () {
 /**
  * @param {String} source
  * @param {Map<String,object>} options
- * @param {string} scriptid
+ * @param {???} macros
+ * @param {Map<String,object>} directives
  * @returns {String}
  */
-exports.compile = function (edbml, options) {
-  // scriptid
+exports.compile = function (edbml, options, macros, directives) {
   if (edbml.contains('<?input')) {
-    return new ScriptCompiler().compile(edbml, options  /*scriptid*/);
+    return new ScriptCompiler().compile(edbml, options, macros, directives);
   } else {
-    return new FunctionCompiler().compile(edbml, options  /*scriptid*/);
+    return new FunctionCompiler().compile(edbml, options, macros, directives);
   }
 };

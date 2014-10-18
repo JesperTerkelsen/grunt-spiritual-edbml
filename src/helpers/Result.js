@@ -25,7 +25,7 @@ class Result {
 	_tofunctionstring(body, params = []) {
 		try {
 			var js = new Function(params.join(","), body).toString();
-			js = js.replace(/^function anonymous/, "function $function");
+			js = js.replace(/^function anonymous/, "function $edbml");
 			js = js.replace(/\&quot;\&apos;/g, "&quot;");
 			return js;
 		} catch (exception) {

@@ -6,7 +6,14 @@ module.exports = function ( grunt ) {
 
 	"use strict";
 
+	// load tasks via package.json
 	require('load-grunt-tasks')(grunt);
+
+	try { // first grunt will build a fake module...
+		grunt.task.loadNpmTasks('grunt-spiritual-edbml');
+	} catch(missingModuleException) {
+		console.log('First build :)');
+	}
 
 	var options = grunt.file.readJSON ( ".jshintrc" );
 	options.unused = false;
@@ -63,10 +70,17 @@ module.exports = function ( grunt ) {
 			}
 		},
 
+		/**
+		 *
+		 */
 		watch: {
 			scripts: {
 				files: [ "**/*.js" ],
-				tasks: [ "concat" ],
+				tasks: [ 
+					'concat:before',
+					'es5to6',
+					'concat:after'
+				],
 				options: {
 					spawn: true
 				}
@@ -74,18 +88,58 @@ module.exports = function ( grunt ) {
 		},
 
 		/*
-		 * Test the the build in other projects (grunt manually)
+		 * Manually install a build of this project in the 
+		 * the node_modules folder so that we can test it.
 		 */
 		copy: {
-			copystuff: {
-				src: 'tasks/things/compiler.js',
-				dest: "../../Chrome/node_modules/grunt-spiritual-edbml/tasks/things/compiler.js"
+			fake_node_module: {
+				files: [{
+					expand: true, 
+					cwd: '.', 
+					src: [
+						'*.*',
+						'tasks/**',
+						//'node_modules/**'
+					],
+					dest: 'node_modules/grunt-spiritual-edbml'
+				}]
+			}
+		},
+
+		// testing it out...
+		edbml: {
+			outline: {
+				options : {},
+				files : {
+					"test/testing.js" : [ "test/*.edbml" ]
+				}
+			},
+			inline : {
+				options : {
+					inline : true,
+					beautify: true
+				},
+				expand: true,
+				dest: 'test/inline',
+				cwd: 'test/inline',
+				src: ['*.edbml']
 			}
 		}
 		
 	});
 
-	grunt.registerTask ( "default", [ 'concat:before', 'es5to6', 'concat:after' ]);
+	// build
+	grunt.registerTask ( "default", [
+		'concat:before',
+		'es5to6',
+		'concat:after',
+		'copy:fake_node_module'
+	]);
+
+	// test
+	grunt.registerTask ( "test", [
+		'edbml'
+	]);
 
 	/**
 	 * Compile ES5 to ES6. Isn't it great.

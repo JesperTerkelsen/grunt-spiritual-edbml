@@ -12,12 +12,12 @@ class Instruction {
 	 */
 	constructor(pi) {
 		this.tag = pi.split("<?")[1].split(" ")[0]; // TODO: regexp this
-		this.attributes = Object.create(null);
+		this.att = Object.create(null);
 		var hit, atexp = Instruction._ATEXP;
 		while ((hit = atexp.exec(pi))) {
 			var n = hit[1],
 				v = hit[2];
-			this.attributes[n] = cast(v);
+			this.att[n] = cast(v);
 		}
 	}
 }

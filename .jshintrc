@@ -2,6 +2,7 @@
 	"browser": false,
 	"esnext": true,
 	"globals": {
+		"__dirname" : true,
 		"module" : true,
 		"require" : true,
 		"exports" : true,
