@@ -1,0 +1,30 @@
+<!DOCTYPE edbml>
+<script>
+	<?param name="header"?>
+	<?input name="ejner1" type="Johnson"?>
+	<?input name="ejner2" type="Johnson"?>
+	<?input name="ejner3" type="Johnson"?>
+	@john = 23;
+	@john += 7;
+	<h2>Hej</h2>
+	<h2>Hej</h2>
+	<h2>Hej</h2>
+	<h2>Hej</h2>
+	<h2>Hej</h2>
+	<h2>Hej</h2>
+	<h2>Hej</h2>
+	<h2>Hej</h2>
+	console.log(@john);
+	function fisse() {
+		<h1 @john>${header}</h1>
+		<h1 @john>${header}</h1>
+		<h1 @john>${header}</h1>
+	}
+	function flemming() {
+		alert('Hello');
+	}
+	<h2 onclick="#{flemming()}">Hej</h2>
+	<h2>Hej</h2>
+	<h2>Hej</h2>
+	<h2>Hej</h2>
+</script>

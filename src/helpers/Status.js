@@ -1,11 +1,11 @@
 "use strict";
 
 /**
- * Tracking compiler state while compiling. 
+ * Tracking compiler state while compiling.
  */
 class Status {
 
-	constructor () {
+	constructor() {
 		this.mode = Status.MODE_JS;
 		this.conf = [];
 		this.peek = false;
@@ -24,21 +24,21 @@ class Status {
 	/**
 	 * Go JS mode.
 	 */
-	gojs () {
+	gojs() {
 		this.mode = Status.MODE_JS;
 	}
 
 	/**
 	 * Go HTML mode.
 	 */
-	gohtml () {
+	gohtml() {
 		this.mode = Status.MODE_HTML;
 	}
 
 	/**
 	 * Go tag mode.
 	 */
-	gotag () {
+	gotag() {
 		this.mode = Status.MODE_TAG;
 	}
 
@@ -46,7 +46,7 @@ class Status {
 	 * Is JS mode?
 	 * @returns {boolean}
 	 */
-	isjs () {
+	isjs() {
 		return this.mode === Status.MODE_JS;
 	}
 
@@ -54,7 +54,7 @@ class Status {
 	 * Is HTML mode?
 	 * @returns {boolean}
 	 */
-	ishtml () {
+	ishtml() {
 		return this.mode === Status.MODE_HTML;
 	}
 
@@ -62,7 +62,7 @@ class Status {
 	 * Is tag mode?
 	 * @returns {boolean}
 	 */
-	istag () {
+	istag() {
 		return this.mode === Status.MODE_TAG;
 	}
 }

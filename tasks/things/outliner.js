@@ -1,11 +1,11 @@
 "use strict";
 
-var cheerio = require ( "cheerio" );
+var cheerio = require("cheerio");
 var chalk = require('chalk');
-var compiler = require ( "./compiler" );
-var formatter = require ( "./formatter" );
-var assistant = require ( "./assistant" );
-var path = require ( "path" );
+var compiler = require("./compiler");
+var formatter = require("./formatter");
+var assistant = require("./assistant");
+var path = require("path");
 
 /**
  * Concat and minify files.
@@ -14,22 +14,22 @@ var path = require ( "path" );
  * @param {Map<String,String} options
  * @param {function} done
  */
-exports.process = function ( grunt, files, options, done ) {
+exports.process = function(grunt, files, options, macros, done) {
 	errors = false;
-	if ( !Array.isArray ( files )) {
-		Object.keys ( files ).forEach ( function ( target ) {
-			var sources = grunt.file.expand ( files [ target ]);
-			var results = trawloutline ( grunt, sources, options );
-			if ( results.length && !errors ) {
-				var text = formatter.beautify ( results );
+	if (!Array.isArray(files)) {
+		Object.keys(files).forEach(function(target) {
+			var sources = grunt.file.expand(files[target]);
+			var results = trawloutline(grunt, sources, options, macros);
+			if (results.length && !errors) {
+				var text = formatter.beautify(results);
 				target = grunt.template.process(target);
-				grunt.file.write ( target, text );
-				grunt.log.writeln ( "File " + chalk.cyan(target) + ' created.');
+				grunt.file.write(target, text);
+				grunt.log.writeln("File " + chalk.cyan(target) + ' created.');
 			}
 		});
 		done();
 	} else {
-		grunt.log.error ( "Object expected" );
+		grunt.log.error("Object expected");
 	}
 };
 
@@ -52,84 +52,86 @@ var errors = false;
 
 /**
  * @todo COPY-PASTE!
- * @param {String} message
+ * @param {string} message
  */
-function error ( message ) {
+function error(message) {
 	//grunt.log.error ( message );
-	console.error ( message );
+	console.error(message);
 	errors = true;
 }
 
 /**
  * @returns {Array<Output>}
- * @returns {String}
+ * @returns {string}
  */
-function trawloutline ( grunt, sources ) {
+function trawloutline(grunt, sources, options, macros) {
 	var results = [];
-	sources.forEach ( function ( src ) {
-		var $ = cheerio.load ( grunt.file.read ( src ));
-		getscripts ( $, src ).each ( function ( i, script ) {
-			results.push ( 
-				parse ( $ ( script ))
+	sources.forEach(function(src) {
+		var $ = cheerio.load(grunt.file.read(src));
+		getscripts($, src, options).each(function(i, script) {
+			results.push(
+				parse($(script), options, macros)
 			);
 		});
 	});
-	return results.join ( "\n\n" );
+	return results.join("\n\n");
 }
 
 /**
  * @returns {$}
  */
-function getscripts ( $, src ) {
-	var scripts = $ ( "script" );
-	if ( scripts.length === 1 ) {
-		var name, script = $ ( scripts [ 0 ]);
-		if ( !script.attr ( "id" )) {
-			name = path.basename ( src );
-			if ( validname ( name )) {
-				script.attr ( "id", name );
+function getscripts($, src) {
+	var scripts = $("script");
+	if (scripts.length === 1) {
+		var name, script = $(scripts[0]);
+		if (!script.attr("id")) {
+			name = path.basename(src);
+			if (validname(name)) {
+				script.attr("id", name);
 			} else {
-				error ( "File name unfit for declaration as a JS object: " + name );	
+				error("File name unfit for declaration as a JS object: " + name);
 			}
 		}
 	} else {
-		if ( !Array.prototype.every.call ( scripts, function ( script ) {
-			return $ ( script ).attr ( "id" );
+		if (!Array.prototype.every.call(scripts, function(script) {
+			return $(script).attr("id");
 		})) {
-			error ( "ID required when multiples script in file: " + src );
+			error("ID required when multiples script in file: " + src);
 		}
 	}
 	return scripts;
 }
 
 /**
- * @param {String} name
+ * @param {string} name
  * @returns {boolean}
  */
-function validname ( name ) {
-	name = name.replace ( /\./g, "" );
-	return name.match ( IDENTIFIER ) ? true : false;
+function validname(name) {
+	name = name.replace(/\./g, "");
+	return name.match(IDENTIFIER) ? true : false;
 }
 
 /**
  * Parse single script.
  * @param {$} script
- * @returns {String}
+ * @param {???} macros
+ * @returns {string}
  */
-function parse ( script ) {
-	var name = script.attr ( "id" );
-	var text = script.text ();
-	var atts = assistant.directives ( script );
-	return compile ( name, text, atts );
+function parse(script, options, macros) {
+	var name = script.attr("id");
+	var text = script.text();
+	var atts = assistant.directives(script);
+	return compile(name, text, options, macros, atts);
 }
 
 /**
  * Compile EDBML to JS with directives.
- * @param {String} name
- * @param {String} edbml
- * @param {Map<String,object>} options
+ * @param {string} name
+ * @param {string} edbml
+ * @param {Map<string,object>} options
+ * @param {Map<string,object>} options
  */
-function compile ( name, edbml, options ) {
-	var result = compiler.compile ( edbml, options );
-	return assistant.declare ( name, result );
+function compile(name, edbml, options, macros, directives) {
+	var result = compiler.compile(edbml, options, macros, directives);
+	return assistant.declare(name, result);
 }
