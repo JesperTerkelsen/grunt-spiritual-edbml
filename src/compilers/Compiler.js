@@ -272,7 +272,7 @@ class Compiler {
 			spot = status.spot,
 			prev = body.substring(0, spot),
 			next = body.substring(spot),
-			name = '$edb' + (this._keyindex++);
+			name = '$edbml' + (this._keyindex++);
 		var outl = js.outline.replace("$name", name).replace("$temp", temp);
 		output.body =
 			prev + "\n" +
@@ -289,11 +289,12 @@ class Compiler {
 
 /**
  * Poke.
+ * TODO: Analyze output.body and only append value+checked on input fields.
  * @type {String}
  */
 Compiler._POKE = {
-	outline: "var $name = edb.$set(function(value, checked) {\n$temp;\n}, this);",
-	inline: "edb.$run(event,&quot;\' + $name + \'&quot;);"
+	outline: "var $name = edbml.$set(function(value, checked) {\n$temp;\n}, this);",
+	inline: "edbml.$run(event,&quot;\' + $name + \'&quot;);"
 };
 
 /**
@@ -301,8 +302,8 @@ Compiler._POKE = {
  * @type {String}
  */
 Compiler._GEEK = {
-	outline: "var $name = edb.$set(function() {\nreturn $temp;\n}, this);",
-	inline: "edb.$get(&quot;\' + $name + \'&quot;);"
+	outline: "var $name = edbml.$set(function() {\nreturn $temp;\n}, this);",
+	inline: "edbml.$get(&quot;\' + $name + \'&quot;);"
 };
 
 /**

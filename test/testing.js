@@ -24,34 +24,30 @@ edb.declare("testing.edbml").as(function $edbml(header){
 	function flemming() {
 		alert('Hello');
 	}
-	var $edb1 = edb.$set(function(value, checked){
+	var $edbml1 = edbml.$set(function(value, checked){
 		flemming();
 	}, this);
-	out.html += '<h2 onclick="edb.$run(event,&quot;' + $edb1 + '&quot;);">Hej</h2>' +
+	out.html += '<h2 onclick="edbml.$run(event,&quot;' + $edbml1 + '&quot;);">Hej</h2>' +
 	            '<h2>Hej</h2>' +
 	            '<h2>Hej</h2>' +
 	            '<h2>Hej</h2>';
 	return out.write();
 }).withInstructions([{
-		tag : "param",
-		att : {
+		param : {
 			name : "header"
 		}
 	}, {
-		tag : "input",
-		att : {
+		input : {
 			name : "ejner1",
 			type : "Johnson"
 		}
 	}, {
-		tag : "input",
-		att : {
+		input : {
 			name : "ejner2",
 			type : "Johnson"
 		}
 	}, {
-		tag : "input",
-		att : {
+		input : {
 			name : "ejner3",
 			type : "Johnson"
 		}

@@ -139,11 +139,10 @@ var Compiler = function () {
         status.spot = output.body.length - 1;
         output.body += 'out.html += \'';
       }
-      break;  /* moved to macro...
-			case "@":
-				this._scriptatt(runner, status, output);
-				break;
-			*/
+      break;
+    case '@':
+      // handled by the @ macro
+      break;
     }
   };
   Compiler.prototype._compilehtml = function (c, runner, status, output) {
@@ -260,7 +259,7 @@ var Compiler = function () {
     this._injectcombo(status, output, Compiler._GEEK);
   };
   Compiler.prototype._injectcombo = function (status, output, js) {
-    var body = output.body, temp = output.temp, spot = status.spot, prev = body.substring(0, spot), next = body.substring(spot), name = '$edb' + this._keyindex++;
+    var body = output.body, temp = output.temp, spot = status.spot, prev = body.substring(0, spot), next = body.substring(spot), name = '$edbml' + this._keyindex++;
     var outl = js.outline.replace('$name', name).replace('$temp', temp);
     output.body = prev + '\n' + outl + next + js.inline.replace('$name', name);
     status.spot += outl.length + 1;
@@ -270,19 +269,20 @@ var Compiler = function () {
 // Static ......................................................................
 /**
  * Poke.
+ * TODO: Analyze output.body and only append value+checked on input fields.
  * @type {String}
  */
 Compiler._POKE = {
-  outline: 'var $name = edb.$set(function(value, checked) {\n$temp;\n}, this);',
-  inline: 'edb.$run(event,&quot;\' + $name + \'&quot;);'
+  outline: 'var $name = edbml.$set(function(value, checked) {\n$temp;\n}, this);',
+  inline: 'edbml.$run(event,&quot;\' + $name + \'&quot;);'
 };
 /**
  * Geek.
  * @type {String}
  */
 Compiler._GEEK = {
-  outline: 'var $name = edb.$set(function() {\nreturn $temp;\n}, this);',
-  inline: 'edb.$get(&quot;\' + $name + \'&quot;);'
+  outline: 'var $name = edbml.$set(function() {\nreturn $temp;\n}, this);',
+  inline: 'edbml.$get(&quot;\' + $name + \'&quot;);'
 };
 /**
  * Matches a qualified attribute name (class,id,src,href) allowing
@@ -501,7 +501,6 @@ var ScriptCompiler = function (FunctionCompiler) {
 var Instruction = function () {
   function Instruction(pi) {
     this.tag = pi.split('<?')[1].split(' ')[0];
-    // TODO: regexp this
     this.att = Object.create(null);
     var hit, atexp = Instruction._ATEXP;
     while (hit = atexp.exec(pi)) {
@@ -511,7 +510,7 @@ var Instruction = function () {
   }
   return Instruction;
 }();
-// STATICS .............................................................................
+// Static ......................................................................
 /**
  * Extract processing instructions from source.
  * @param {String} source

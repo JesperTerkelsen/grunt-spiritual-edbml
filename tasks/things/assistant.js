@@ -37,7 +37,7 @@ exports.directives = function(script, extras) {
 exports.declare = function(name, result) {
 	var fun = result.functionstring;
 	var pis = result.instructionset;
-	var output = "edb.declare(\"" + name + "\").as(" + fun;
+	var output = "edbml.declare(\"" + name + "\").as(" + fun;
 	if (pis) {
 		var json = formatjson(pis);
 		json = JSON.stringify(json);
