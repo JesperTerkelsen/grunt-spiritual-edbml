@@ -6,7 +6,7 @@
 class Output {
 
 	/**
-	 * @param @optional {String} body
+	 * @param @optional {string} body
 	 */
 	constructor(body = "") {
 		this.body = body;

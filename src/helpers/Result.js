@@ -6,7 +6,7 @@
 class Result {
 
 	/**
-	 * @param {String} body
+	 * @param {string} body
 	 * @param {Array<String>} params
 	 * @param {Array<Instruction>} instructions
 	 */
@@ -18,9 +18,9 @@ class Result {
 
 	/**
 	 * Compute single function declaration.
-	 * @param {String} script
+	 * @param {string} script
 	 * @param @optional (Array<String>} params
-	 * @returns {String}
+	 * @returns {string}
 	 */
 	_tofunctionstring(body, params = []) {
 		try {
@@ -39,9 +39,9 @@ class Result {
 
 	/**
 	 * Fallback for invalid source.
-	 * @param {String} script
+	 * @param {string} script
 	 * @param (Array<String>} params
-	 * @returns {String}
+	 * @returns {string}
 	 */
 	_tofallbackstring(body, params, exception) {
 		body = this._emergencyformat(body, params);
@@ -53,8 +53,8 @@ class Result {
 
 	/**
 	 * Format invalid source for readability.
-	 * @param {String} body
-	 * @returns {String}
+	 * @param {string} body
+	 * @returns {string}
 	 */
 	_emergencyformat(body, params) {
 		var result = "",

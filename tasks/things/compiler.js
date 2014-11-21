@@ -16,7 +16,7 @@ function each(object, func, thisp) {
  * Autocast string to an inferred type. "123" returns a number
  * while "true" and false" return a boolean. Empty string evals
  * to `true` in order to support HTML attribute minimization.
- * @param {String} string
+ * @param {string} string
  * @returns {object}
  */
 function cast(string) {
@@ -42,7 +42,7 @@ function cast(string) {
 /**
  * Generate unique key.
  * Note: Key structure must be kept in sync with {gui.KeyMaster#generatekey}.
- * @returns {String}
+ * @returns {string}
  */
 var generateKey = function () {
   var keys = {};
@@ -83,14 +83,14 @@ String.prototype.endsWith = function (string) {
 };
 var Compiler = function () {
   function Compiler() {
-    this._keyindex = 1;
+    this._keycounter = 1;
   }
-  Compiler.prototype.newline = function (line, runner, status, output) {
+  Compiler.prototype.newline = function (line, runner, status, markup, output) {
     status.last = line.length - 1;
     status.adds = line[0] === '+';
     status.cont = status.cont || status.ishtml() && status.adds;
   };
-  Compiler.prototype.endline = function (line, runner, status, output) {
+  Compiler.prototype.endline = function (line, runner, status, markup, output) {
     if (status.ishtml()) {
       if (!status.cont) {
         output.body += '\';\n';
@@ -101,16 +101,13 @@ var Compiler = function () {
     }
     status.cont = false;
   };
-  Compiler.prototype.nextchar = function (c, runner, status, output) {
+  Compiler.prototype.nextchar = function (c, runner, status, markup, output) {
     switch (status.mode) {
     case Status.MODE_JS:
-      this._compilejs(c, runner, status, output);
+      this._compilejs(c, runner, status, markup, output);
       break;
     case Status.MODE_HTML:
-      this._compilehtml(c, runner, status, output);
-      break;
-    case Status.MODE_TAG:
-      this._compiletag(c, runner, status, output);
+      this._compilehtml(c, runner, status, markup, output);
       break;
     }
     if (status.skip-- <= 0) {
@@ -122,20 +119,25 @@ var Compiler = function () {
         }
       }
     }
+    if (runner.done) {
+      markup.debug();
+    }
   };
   Compiler.prototype._compile = function (script) {
     var runner = new Runner();
     var status = new Status();
+    var markup = new Markup();
     var output = new Output('\'use strict\';\n');
-    runner.run(this, script, status, output);
+    runner.run(this, script, status, markup, output);
     output.body += (status.ishtml() ? '\';' : '') + '\nreturn out.write ();';
     return output.body;
   };
-  Compiler.prototype._compilejs = function (c, runner, status, output) {
+  Compiler.prototype._compilejs = function (c, runner, status, markup, output) {
     switch (c) {
     case '<':
       if (runner.firstchar) {
         status.gohtml();
+        markup.next(c);
         status.spot = output.body.length - 1;
         output.body += 'out.html += \'';
       }
@@ -145,95 +147,99 @@ var Compiler = function () {
       break;
     }
   };
-  Compiler.prototype._compilehtml = function (c, runner, status, output) {
+  Compiler.prototype._compilehtml = function (c, runner, status, markup, output) {
     var special = status.peek || status.poke || status.geek;
-    switch (c) {
-    case '{':
-      if (special) {
-        status.curl++;
-      }
-      break;
-    case '}':
-      if (--status.curl === 0) {
-        if (status.peek) {
-          status.peek = false;
-          status.skip = 1;
-          status.curl = 0;
-          output.body += ') + \'';
+    if (!this._continueshtml(c, runner, status)) {
+      var context = markup.next(c);
+      switch (c) {
+      case '{':
+        if (special) {
+          status.curl++;
         }
-        if (status.poke) {
-          this._poke(status, output);
-          status.poke = false;
-          output.temp = null;
-          status.skip = 1;
-          status.curl = 0;
+        break;
+      case '}':
+        if (--status.curl === 0) {
+          if (status.peek) {
+            status.peek = false;
+            status.skip = 1;
+            status.curl = 0;
+            output.body += ') + \'';
+          }
+          if (status.poke) {
+            this._poke(status, markup, output);
+            status.poke = false;
+            output.temp = null;
+            status.skip = 1;
+            status.curl = 0;
+          }
+          if (status.geek) {
+            this._geek(status, markup, output);
+            status.geek = false;
+            output.temp = null;
+            status.skip = 1;
+            status.curl = 0;
+          }
         }
-        if (status.geek) {
-          this._geek(status, output);
-          status.geek = false;
-          output.temp = null;
-          status.skip = 1;
+        break;
+      case '$':
+        if (!special && runner.ahead('{')) {
+          status.peek = true;
+          status.skip = 2;
           status.curl = 0;
+          output.body += '\' + ' + this._escapefrom(context) + ' (';
         }
+        break;
+      case '#':
+        if (!special && runner.ahead('{')) {
+          status.poke = true;
+          status.skip = 2;
+          status.curl = 0;
+          output.temp = '';
+        }
+        break;
+      case '?':
+        if (!special && runner.ahead('{')) {
+          status.geek = true;
+          status.skip = 2;
+          status.curl = 0;
+          output.temp = '';
+        }
+        break;
+      case '\'':
+        if (!special) {
+          output.body += '\\';
+        }
+        break;
+      case '@':
+        this._htmlatt(runner, status, markup, output);
+        break;
       }
-      break;
-    case '$':
-      if (!special && runner.ahead('{')) {
-        status.peek = true;
-        status.skip = 2;
-        status.curl = 0;
-        output.body += '\' + (';
-      }
-      break;
-    case '#':
-      if (!special && runner.ahead('{')) {
-        status.poke = true;
-        status.skip = 2;
-        status.curl = 0;
-        output.temp = '';
-      }
-      break;
-    case '?':
-      if (!special && runner.ahead('{')) {
-        status.geek = true;
-        status.skip = 2;
-        status.curl = 0;
-        output.temp = '';
-      }
-      break;
-    case '+':
+    }
+  };
+  Compiler.prototype._continueshtml = function (c, runner, status) {
+    if (c === '+') {
       if (runner.firstchar) {
         status.skip = status.adds ? 1 : 0;
+        return true;
       } else if (runner.lastchar) {
         status.cont = true;
         status.skip = 1;
+        return true;
       }
-      break;
-    case '\'':
-      if (!special) {
-        output.body += '\\';
-      }
-      break;
-    case '@':
-      this._htmlatt(runner, status, output);
-      break;
+    }
+    return false;
+  };
+  Compiler.prototype._escapefrom = function (context) {
+    switch (context) {
+    case Markup.CONTEXT_TXT:
+      return '$txt';
+    case Markup.CONTEXT_VAL:
+      return '$val';
+    default:
+      return '';
     }
   };
-  Compiler.prototype._compiletag = function (status, c, i, line) {
-    switch (c) {
-    case '$':
-      if (this._ahead(line, i, '{')) {
-        status.refs = true;
-        status.skip = 2;
-      }
-      break;
-    case '>':
-      status.gojs();
-      status.skip = 1;
-      break;
-    }
-  };
-  Compiler.prototype._htmlatt = function (runner, status, output) {
+  Compiler.prototype._htmlatt = function (runner, status, markup, output) {
     var attr = Compiler._ATTREXP;
     var rest, name, dels, what;
     if (runner.behind('@')) {
@@ -252,14 +258,14 @@ var Compiler = function () {
       status.skip = name.length + 1;
     }
   };
-  Compiler.prototype._poke = function (status, output) {
-    this._injectcombo(status, output, Compiler._POKE);
+  Compiler.prototype._poke = function (status, markup, output) {
+    this._injectcombo(status, markup, output, Compiler._POKE);
   };
-  Compiler.prototype._geek = function (status, output) {
-    this._injectcombo(status, output, Compiler._GEEK);
+  Compiler.prototype._geek = function (status, markup, output) {
+    this._injectcombo(status, markup, output, Compiler._GEEK);
   };
-  Compiler.prototype._injectcombo = function (status, output, js) {
-    var body = output.body, temp = output.temp, spot = status.spot, prev = body.substring(0, spot), next = body.substring(spot), name = '$edbml' + this._keyindex++;
+  Compiler.prototype._injectcombo = function (status, markup, output, js) {
+    var body = output.body, temp = output.temp, spot = status.spot, prev = body.substring(0, spot), next = body.substring(spot), name = '$edbml' + this._keycounter++;
     var outl = js.outline.replace('$name', name).replace('$temp', temp);
     output.body = prev + '\n' + outl + next + js.inline.replace('$name', name);
     status.spot += outl.length + 1;
@@ -270,7 +276,7 @@ var Compiler = function () {
 /**
  * Poke.
  * TODO: Analyze output.body and only append value+checked on input fields.
- * @type {String}
+ * @type {string}
  */
 Compiler._POKE = {
   outline: 'var $name = edbml.$set(function(value, checked) {\n$temp;\n}, this);',
@@ -278,7 +284,7 @@ Compiler._POKE = {
 };
 /**
  * Geek.
- * @type {String}
+ * @type {string}
  */
 Compiler._GEEK = {
   outline: 'var $name = edbml.$set(function() {\nreturn $temp;\n}, this);',
@@ -329,10 +335,15 @@ var FunctionCompiler = function (Compiler) {
 		 */
     this._instructions = null;
     /**
-		 * Compiled function arguments list.
+		 * Compiled arguments list.
 		 * @type {Array<string>}
 		 */
     this._params = null;
+    /**
+		 * Imported functions.
+		 * @type {Map<string,string>}
+		 */
+    this._functions = {};
     /**
 		 * Did compilation fail just yet?
 		 * @type {boolean}
@@ -352,6 +363,7 @@ var FunctionCompiler = function (Compiler) {
     this._options = options || {};
     this._macros = macros;
     this._params = [];
+    this._functions = {};
     this._head = {};
     source = this._sequence.reduce(function (s, step) {
       return step.call(this, s);
@@ -422,20 +434,30 @@ var FunctionCompiler = function (Compiler) {
     return Instruction.clean(script);
   };
   FunctionCompiler.prototype._instruct = function (pi) {
-    var type = pi.tag;
-    var atts = pi.att;
-    var name = atts.name;
-    switch (type) {
+    var att = pi.att;
+    switch (pi.tag) {
     case 'param':
-      this._params.push(name);
+      this._params.push(att.name);
+      break;
+    case 'function':
+      this._functions[att.name] = att.src;
+      //this._head[att.name] = att.src + '.lock(out)';
       break;
     }
   };
   FunctionCompiler.prototype._definehead = function (script) {
-    if (this._params.indexOf('out') < 0) {
-      this._head.out = '$edbml.__$out__';
+    var head = this._head;
+    var params = this._params;
+    var functions = this._functions;
+    if (params.indexOf('out') < 0) {
+      head.out = '$edbml.$out__MACROFIX';
     }
-    this._head.__$att__ = '$edbml.__$att__';
+    head.$att__MACROFIX = '$edbml.$att__MACROFIX';
+    head.$txt = 'edbml.safetext';
+    head.$val = 'edbml.safeattr';
+    each(functions, function (name, src) {
+      head[name] = src + '.lock(out)';
+    });
     return script;
   };
   FunctionCompiler.prototype._injecthead = function (script, head) {
@@ -444,8 +466,8 @@ var FunctionCompiler = function (Compiler) {
     }).join(',') + ';' + script;
   };
   FunctionCompiler.prototype._macromize = function (script) {
-    var macros = this._macros;
-    return (macros ? macros.compile(script) : script).replace(/__\$out__/g, '$out').replace(/__\$att__/g, '$att');
+    script = this._macros ? this._macros.compile(script) : script;
+    return script.replace(/__MACROFIX/g, '');
   };
   FunctionCompiler.prototype._source = function (source, params) {
     var lines = source.split('\n');
@@ -458,7 +480,7 @@ var FunctionCompiler = function (Compiler) {
 }(Compiler);
 // Static ......................................................................
 /**
- * RegExp used to validate no nested scripts. Important back when all this was a 
+ * RegExp used to validate no nested scripts. Important back when all this was a
  * clientside framework because the browser can't parse nested scripts, nowadays
  * it might be practical?
  * http://stackoverflow.com/questions/1441463/how-to-get-regex-to-match-multiple-script-tags
@@ -513,7 +535,7 @@ var Instruction = function () {
 // Static ......................................................................
 /**
  * Extract processing instructions from source.
- * @param {String} source
+ * @param {string} source
  * @returns {Array<Instruction>}
  */
 Instruction.from = function (source) {
@@ -525,8 +547,8 @@ Instruction.from = function (source) {
 };
 /**
  * Remove processing instructions from source.
- * @param {String} source
- * @returns {String}
+ * @param {string} source
+ * @returns {string}
  */
 Instruction.clean = function (source) {
   return source.replace(this._PIEXP, '');
@@ -550,8 +572,8 @@ var Runner = function () {
     this._line = null;
     this._index = -1;
   }
-  Runner.prototype.run = function (compiler, script, status, output) {
-    this._runlines(compiler, script.split('\n'), status, output);
+  Runner.prototype.run = function (compiler, script, status, markup, output) {
+    this._runlines(compiler, script.split('\n'), status, markup, output);  // markup.debug(); // uncomment to debug Markup.js
   };
   Runner.prototype.ahead = function (string) {
     var line = this._line;
@@ -572,29 +594,29 @@ var Runner = function () {
   Runner.prototype.skipahead = function (string) {
     console.error('TODO');
   };
-  Runner.prototype._runlines = function (compiler, lines, status, output) {
+  Runner.prototype._runlines = function (compiler, lines, status, markup, output) {
     var stop = lines.length - 1;
     lines.forEach(function (line, index) {
       this.firstline = index === 0;
       this.lastline = index === stop;
-      this._runline(line, index, compiler, status, output);
+      this._runline(line, index, compiler, status, markup, output);
     }.bind(this));
   };
-  Runner.prototype._runline = function (line, index, compiler, status, output) {
+  Runner.prototype._runline = function (line, index, compiler, status, markup, output) {
     line = this._line = line.trim();
     if (line.length) {
-      compiler.newline(line, this, status, output);
-      this._runchars(compiler, line.split(''), status, output);
-      compiler.endline(line, this, status, output);
+      compiler.newline(line, this, status, markup, output);
+      this._runchars(compiler, line.split(''), status, markup, output);
+      compiler.endline(line, this, status, markup, output);
     }
   };
-  Runner.prototype._runchars = function (compiler, chars, status, output) {
+  Runner.prototype._runchars = function (compiler, chars, status, markup, output) {
     var stop = chars.length - 1;
     chars.forEach(function (c, i) {
       this._index = i;
       this.firstchar = i === 0;
       this.lastchar = i === stop;
-      compiler.nextchar(c, this, status, output);
+      compiler.nextchar(c, this, status, markup, output);
     }.bind(this));
   };
   return Runner;
@@ -690,6 +712,167 @@ var Status = function () {
 Status.MODE_JS = 'js';
 Status.MODE_HTML = 'html';
 Status.MODE_TAG = 'tag';
+var Markup = function () {
+  function Markup() {
+    this._is = null;
+    this._buffer = null;
+    this._quotes = null;
+    this._snapshots = [];
+    this._index = -1;
+    this._go('txt');
+  }
+  Markup.prototype.next = function (c) {
+    this._index++;
+    switch (c) {
+    case '<':
+    case '>':
+      this._ontag(c);
+      break;
+    case ' ':
+      this._onspace(c);
+      break;
+    case '=':
+      this._onequal(c);
+      break;
+    case '"':
+    case '\'':
+      this._onquote(c);
+      break;
+    default:
+      this._buf(c);
+      break;
+    }
+    this._prevchar = c;
+    return this._is;
+  };
+  Markup.prototype.debug = function () {
+    this._debug(this._snapshots);
+  };
+  Markup.prototype._ontag = function (c) {
+    if (c === '<') {
+      if (this._is === 'txt') {
+        this._go('tag');
+      }
+    } else {
+      switch (this._is) {
+      case 'att':
+      case 'tag':
+        this._go('txt');
+        break;
+      }
+    }
+  };
+  Markup.prototype._onquote = function (c) {
+    var previndex = this._index - 1;
+    switch (this._is) {
+    case 'val':
+      if (this._quotes) {
+        if (this._quotes === c && this._prevchar !== '\\') {
+          this._go('att');
+        }
+      } else if (this._was(previndex, 'att')) {
+        this._quotes = c;
+      }
+      break;
+    default:
+      this._buf(c);
+      break;
+    }
+  };
+  Markup.prototype._onspace = function (c) {
+    switch (this._is) {
+    case 'tag':
+      this._go('att');
+      break;
+    case 'val':
+      if (!this._quotes) {
+        this._go('att');
+      }
+      break;
+    default:
+      this._buf(c);
+      break;
+    }
+  };
+  Markup.prototype._onequal = function (c) {
+    if (this._is === 'att') {
+      this._go('val');
+    } else {
+      this._buf(c);
+    }
+  };
+  Markup.prototype._buf = function (c) {
+    this._buffer += c;
+  };
+  Markup.prototype._go = function (newis) {
+    if (this._is !== null) {
+      this._snapshots.push([
+        this._index,
+        this._is,
+        this._buffer
+      ]);
+    }
+    this._quotes = null;
+    this._buffer = '';
+    this._is = newis;
+  };
+  Markup.prototype._was = function (index, type) {
+    var ix, it, match, snap, prev, snaps = this._snapshots;
+    if (snaps.length) {
+      it = snaps.length - 1;
+      while (!match && (snap = snaps[it--])) {
+        if ((ix = snap[0]) === index) {
+          match = snap;
+        } else if (ix < index) {
+          match = prev;
+        }
+        prev = snap;
+      }
+      return match && match[1] === type;
+    }
+    return false;
+  };
+  Markup.prototype._debug = function (snapshots) {
+    var index, is, was, buffer, yyy, next, end, tab = '\t', tabs = [];
+    console.log(snapshots.reduce(function (html, snap) {
+      index = snap[0];
+      is = snap[1];
+      buffer = snap[2];
+      switch (is) {
+      case 'tag':
+        if (end = buffer[0] === '/') {
+          tabs.pop();
+        }
+        was = was === 'txt' && yyy.trim().length ? '' : was;
+        next = (was ? '\n' + tabs.join('') : '') + '<' + buffer;
+        if (!end) {
+          tabs.push(tab);
+        }
+        break;
+      case 'att':
+        next = ' ' + buffer.trim();
+        if (next === ' ') {
+          next = '';
+        }
+        break;
+      case 'val':
+        next = '="' + buffer + '"';
+        break;
+      case 'txt':
+        next = (was ? '>' : '') + buffer;
+        break;
+      }
+      was = is;
+      yyy = buffer;
+      return html + next;
+    }, '') + (was === 'tag' ? '>' : ''));
+  };
+  return Markup;
+}();
+// Static ......................................................................
+Markup.CONTEXT_TXT = 'txt';
+Markup.CONTEXT_ATT = 'att';
+Markup.CONTEXT_VAL = 'val';
 var Output = function () {
   function Output(body) {
     if (body === undefined)
@@ -700,11 +883,11 @@ var Output = function () {
   return Output;
 }();
 /**
- * @param {String} source
+ * @param {string} source
  * @param {Map<String,object>} options
  * @param {???} macros
  * @param {Map<String,object>} directives
- * @returns {String}
+ * @returns {string}
  */
 exports.compile = function (edbml, options, macros, directives) {
   if (edbml.contains('<?input')) {

@@ -5,10 +5,10 @@ var uglifier = require("uglify-js");
 
 /**
  * Format JS for readability.
- * @param {String} js
- * @param {String} tab
+ * @param {string} js
+ * @param {string} tab
  * @param {boolean} buffer (boolean?)
- * @returns {String}
+ * @returns {string}
  */
 exports.beautify = function(js, tab, buffer) {
 	tab = tab || '';
@@ -24,8 +24,8 @@ exports.beautify = function(js, tab, buffer) {
 
 /**
  * Compute compressed source for file.
- * @param {String} filepath The file path
- * @returns {String}
+ * @param {string} filepath The file path
+ * @returns {string}
  */
 exports.uglify = function(js) {
 	return uglifier.minify(js, {

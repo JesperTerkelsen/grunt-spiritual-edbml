@@ -5,7 +5,7 @@ var sweet = require('sweet.js');
 /**
  * TODO: WHAT TO CALL THIS THING?
  * @param {Grunt} grunt
- * @param {Map<String,String>} options
+ * @param {Map<string,string>} options
  */
 exports.init = function(grunt, options) {
 

@@ -20,9 +20,11 @@
 		"Instruction" : true,
 		"Result" : true,
 		"Runner" : true,
-		"Output" : true,
 		"Status" : true,
-		"edb" : true
+		"Markup" : true,
+		"Output" : true,
+		"edb" : true,
+		"edbml" : true
 	},
 	"globalstrict": true,
 	"quotmark": false,

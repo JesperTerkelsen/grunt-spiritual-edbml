@@ -41,6 +41,7 @@ module.exports = function ( grunt ) {
 					"helpers/Runner.js",
 					"helpers/Result.js",
 					"helpers/Status.js",
+					"helpers/Markup.js",
 					"helpers/Output.js",
 					"footer.js"
 				].map ( function ( src ) {
@@ -111,7 +112,7 @@ module.exports = function ( grunt ) {
 			outline: {
 				options : {},
 				files : {
-					"test/testing.js" : [ "test/*.edbml" ]
+					"test/out/outline/outline.js" : [ "test/src/outline/**/*.edbml" ]
 				}
 			},
 			inline : {
@@ -120,8 +121,8 @@ module.exports = function ( grunt ) {
 					beautify: true
 				},
 				expand: true,
-				dest: 'test/inline',
-				cwd: 'test/inline',
+				dest: 'test/out/inline',
+				cwd: 'test/src/inline',
 				src: ['*.edbml']
 			}
 		}

@@ -2,3 +2,5 @@ src/*
 build/*
 test/*
 Gruntfile.js
+.editorconfig
+.jshintrc

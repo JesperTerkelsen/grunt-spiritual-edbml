@@ -9,8 +9,8 @@ var path = require('path');
 
 /**
  * @param {Grunt} grunt
- * @param {Map<String,String>} files
- * @param {Map<String,String>} options
+ * @param {Map<string,string>} files
+ * @param {Map<string,string>} options
  * @param {function} done
  */
 exports.process = function(grunt, files, options, macros, done) {
@@ -97,9 +97,9 @@ function resolvescripts(grunt, src, options, macros) {
 
 /**
  * Bypass dysfunction in Cheerio that would HTML-encode the JS.
- * @param {String} html
- * @param {Map<String,String>} holders
- * @returns {String}
+ * @param {string} html
+ * @param {Map<string,string>} holders
+ * @returns {string}
  */
 function resolvehtml(html, holders) {
 	Object.keys(holders).forEach(function(key) {
@@ -114,7 +114,7 @@ function resolvehtml(html, holders) {
  */
 function convertinline(script, options, macros, key, tab, id) {
 	var js, directives = assistant.directives(script);
-	var scriptid = id || ('edb.' + key); // TODO: is this right (with the id)?
+	var scriptid = id || ('edbml.' + key); // TODO: is this right (with the id)?
 	var result = compiler.compile(script.html(), options, macros, directives); // 'edb' + key
 	js = assistant.declare(scriptid, result);
 	js = options.beautify ? formatter.beautify(js, tab, true) : formatter.uglify(js);
@@ -129,9 +129,9 @@ function convertinline(script, options, macros, key, tab, id) {
 
 /**
  * Change extension of file and return new path.
- * @param {String} filepath
+ * @param {string} filepath
  * @param {Map} options
- * @returns {String}
+ * @returns {string}
  */
 function rename(filepath, options) {
 	var base = filepath.substr(0, filepath.lastIndexOf('.'));
@@ -140,8 +140,8 @@ function rename(filepath, options) {
 
 /**
  * Generate placeholder syntax for key.
- * @param {String} key
- * @returns {String}
+ * @param {string} key
+ * @returns {string}
  */
 function placeholder(key) {
 	return '${' + key + '}';
@@ -151,7 +151,7 @@ function placeholder(key) {
  * Preserve some indentation in output.
  * @TODO: double check whitespace only.
  * @param {$} script
- * @returns {String}
+ * @returns {string}
  */
 function tabbing(script) {
 	var prev, data;
