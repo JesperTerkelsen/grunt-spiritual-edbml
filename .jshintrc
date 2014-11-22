@@ -10,7 +10,7 @@
 		"Buffer" : true,
 		"extend" : true,
 		"each" : true,
-		"unique" : true,
+		"cast" : true,
 		"generateKey" : true,
 		"Compiler" : true,
 		"FunctionCompiler" : true,

@@ -1,0 +1,16 @@
+<!DOCTYPE edbml>
+<script>
+	<?input name="ged" type="ged.GedModel"?>
+	<?function name="hans" src="ged.headline.edbml"?>
+	<table novalue title=noquotes id='singlequotes' class="doublequotes">
+		<tr style="color:${ged.color}">
+			<td class="first" id="first">${ged.firstname}</td>
+			<td class="last" id="last">${ged.lasttname}</td>
+		</tr>
+	</table>
+	<div id="hans" +
+		class="jens" +
+		title="ole">
+		<span>Anders</span>
+	</div>
+</script>

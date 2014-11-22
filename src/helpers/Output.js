@@ -10,6 +10,6 @@ class Output {
 	 */
 	constructor(body = "") {
 		this.body = body;
-		this.temp = null
+		this.temp = null;
 	}
 }
