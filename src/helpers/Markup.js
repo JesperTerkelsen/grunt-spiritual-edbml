@@ -7,6 +7,8 @@
 class Markup {
 
 	constructor() {
+		this.tag = null; // current tagname (if applicable)
+		this.att = null; // current attname (not maintained!)
 		this._is = null;
 		this._buffer = null;
 		this._quotes = null;
@@ -59,12 +61,17 @@ class Markup {
 	_ontag(c) {
 		if(c === '<') {
 			if(this._is === 'txt') {
+				this.tag = null;
 				this._go('tag');
 			}
 		} else {
+			if(this._is === 'tag') {
+				this.tag = this._buffer.trim();
+			}
 			switch(this._is) {
 				case 'att':
 				case 'tag':
+					this.tag = null;
 					this._go('txt');
 					break;
 			}
@@ -102,6 +109,7 @@ class Markup {
 	_onspace(c) {
 		switch(this._is) {
 			case 'tag':
+				this.tag = this._buffer.trim();
 				this._go('att');
 				break;
 			case 'val':

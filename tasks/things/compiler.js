@@ -83,7 +83,7 @@ String.prototype.endsWith = function (string) {
 };
 var Compiler = function () {
   function Compiler() {
-    this._keycounter = 1;
+    this._keycounter = 0;
   }
   Compiler.prototype.newline = function (line, runner, status, markup, output) {
     status.last = line.length - 1;
@@ -127,7 +127,7 @@ var Compiler = function () {
     var runner = new Runner();
     var status = new Status();
     var markup = new Markup();
-    var output = new Output('\'use strict\';\n');
+    var output = new Output();
     runner.run(this, script, status, markup, output);
     output.body += (status.ishtml() ? '\';' : '') + '\nreturn out.write ();';
     return output.body;
@@ -259,15 +259,23 @@ var Compiler = function () {
     }
   };
   Compiler.prototype._poke = function (status, markup, output) {
-    this._injectcombo(status, markup, output, Compiler._POKE);
+    var tag = markup.tag || '';
+    var arg = tag.match(/input|textarea/) ? 'value, checked' : '';
+    this._injectcombo(status, markup, output, {
+      outline: 'var $name = $set(function(' + arg + ') {\n$temp;\n}, this);',
+      inline: 'edbml.$run(event, \\\'\' + $name + \'\\\');'
+    });
   };
   Compiler.prototype._geek = function (status, markup, output) {
-    this._injectcombo(status, markup, output, Compiler._GEEK);
+    this._injectcombo(status, markup, output, {
+      outline: 'var $name = $set(function() {\nreturn $temp;\n}, this);',
+      inline: 'edbml.$get(&quot;\' + $name + \'&quot;);'
+    });
   };
-  Compiler.prototype._injectcombo = function (status, markup, output, js) {
-    var body = output.body, temp = output.temp, spot = status.spot, prev = body.substring(0, spot), next = body.substring(spot), name = '$edbml' + this._keycounter++;
-    var outl = js.outline.replace('$name', name).replace('$temp', temp);
-    output.body = prev + '\n' + outl + next + js.inline.replace('$name', name);
+  Compiler.prototype._injectcombo = function (status, markup, output, combo) {
+    var body = output.body, temp = output.temp, spot = status.spot, prev = body.substring(0, spot), next = body.substring(spot), name = '$' + ++this._keycounter;
+    var outl = combo.outline.replace('$name', name).replace('$temp', temp);
+    output.body = prev + '\n' + outl + next + combo.inline.replace('$name', name);
     status.spot += outl.length + 1;
   };
   return Compiler;
@@ -277,19 +285,21 @@ var Compiler = function () {
  * Poke.
  * TODO: Analyze output.body and only append value+checked on input fields.
  * @type {string}
- */
+ *
 Compiler._POKE = {
-  outline: 'var $name = edbml.$set(function(value, checked) {\n$temp;\n}, this);',
-  inline: 'edbml.$run(event,&quot;\' + $name + \'&quot;);'
+	outline: "var $name = $set(function(value, checked) {\n$temp;\n}, this);",
+	inline: "edbml.$run(event, \\'\' + $name + \'\\');"
 };
+
 /**
  * Geek.
  * @type {string}
- */
+ *
 Compiler._GEEK = {
-  outline: 'var $name = edbml.$set(function() {\nreturn $temp;\n}, this);',
-  inline: 'edbml.$get(&quot;\' + $name + \'&quot;);'
+	outline: "var $name = $set(function() {\nreturn $temp;\n}, this);",
+	inline: "edbml.$get(&quot;\' + $name + \'&quot;);"
 };
+*/
 /**
  * Matches a qualified attribute name (class,id,src,href) allowing
  * underscores, dashes and dots while not starting with a number.
@@ -310,13 +320,14 @@ var FunctionCompiler = function (Compiler) {
       this._validate,
       this._extract,
       this._direct,
+      this._compile,
       this._definehead,
       this._injecthead,
-      this._compile,
       this._macromize
     ];
     /**
-		 * Hm.
+		 * Options from Grunt.
+		 * @type {Map}
 		 */
     this._options = null;
     /**
@@ -340,7 +351,7 @@ var FunctionCompiler = function (Compiler) {
 		 */
     this._params = null;
     /**
-		 * Imported functions.
+		 * Tracking imported functions.
 		 * @type {Map<string,string>}
 		 */
     this._functions = {};
@@ -398,7 +409,6 @@ var FunctionCompiler = function (Compiler) {
       break;
     case 'function':
       this._functions[att.name] = att.src;
-      //this._head[att.name] = att.src + '.lock(out)';
       break;
     }
   };
@@ -409,17 +419,26 @@ var FunctionCompiler = function (Compiler) {
     if (params.indexOf('out') < 0) {
       head.out = '$edbml.$out__MACROFIX';
     }
-    head.$att__MACROFIX = '$edbml.$att__MACROFIX';
-    head.$txt = 'edbml.safetext';
-    head.$val = 'edbml.safeattr';
+    if (script.contains('$att')) {
+      head.$att__MACROFIX = '$edbml.$att__MACROFIX';
+    }
+    if (script.contains('$set')) {
+      head.$set = 'edbml.$set';
+    }
+    if (script.contains('$txt')) {
+      head.$txt = 'edbml.safetext';
+    }
+    if (script.contains('$val')) {
+      head.$val = 'edbml.safeattr';
+    }
     each(functions, function (name, src) {
       head[name] = src + '.lock(out)';
     });
     return script;
   };
   FunctionCompiler.prototype._injecthead = function (script, head) {
-    return 'var ' + each(this._head, function (name, value) {
-      return name + ' = ' + value;
+    return '\'use strict\';\n' + 'var ' + each(this._head, function (name, value) {
+      return name + (value !== undefined ? ' = ' + value : '');
     }).join(',') + ';' + script;
   };
   FunctionCompiler.prototype._macromize = function (script) {
@@ -655,8 +674,10 @@ var Result = function () {
   Result.prototype._tofunctionstring = function (body, params) {
     if (params === undefined)
       params = [];
+    var js;
     try {
-      var js = new Function(params.join(','), body).toString();
+      js = '\'use strict\'\n;' + body;
+      js = new Function(params.join(','), body).toString();
       js = js.replace(/^function anonymous/, 'function $edbml');
       js = js.replace(/\&quot;\&apos;/g, '&quot;');
       return js;
@@ -739,6 +760,10 @@ Status.MODE_HTML = 'html';
 Status.MODE_TAG = 'tag';
 var Markup = function () {
   function Markup() {
+    this.tag = null;
+    // current tagname (if applicable)
+    this.att = null;
+    // current attname (not maintained!)
     this._is = null;
     this._buffer = null;
     this._quotes = null;
@@ -776,12 +801,17 @@ var Markup = function () {
   Markup.prototype._ontag = function (c) {
     if (c === '<') {
       if (this._is === 'txt') {
+        this.tag = null;
         this._go('tag');
       }
     } else {
+      if (this._is === 'tag') {
+        this.tag = this._buffer.trim();
+      }
       switch (this._is) {
       case 'att':
       case 'tag':
+        this.tag = null;
         this._go('txt');
         break;
       }
@@ -807,6 +837,7 @@ var Markup = function () {
   Markup.prototype._onspace = function (c) {
     switch (this._is) {
     case 'tag':
+      this.tag = this._buffer.trim();
       this._go('att');
       break;
     case 'val':

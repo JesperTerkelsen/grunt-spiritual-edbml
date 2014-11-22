@@ -3,6 +3,7 @@
 	<?input name="ged" type="ged.GedModel"?>
 	<?function name="hans" src="ged.headline.edbml"?>
 	<!-- heres a comment -->
+	<input type="checkbox" onclick="#{alert(value)}" onchange="#{alert(checked)}"/>
 	<table novalue title=noquotes id='singlequotes' class="doublequotes">
 		<tr style="color:${ged.color}">
 			/* Here's another comment! */
@@ -12,7 +13,7 @@
 	</table>
 	// here's a single comment :/
 	// and another single comment
-	<a href="http://this.should.not.be.stripped">Hello</a>
+	<a onclick="#{alert('thing')}" onfisse="#{alet('thong')}" href="http://this.should.not.be.stripped">Hello</a>
 	<div id="hans" +
 		class="jens" +
 		title="ole">

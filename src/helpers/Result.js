@@ -23,8 +23,10 @@ class Result {
 	 * @returns {string}
 	 */
 	_tofunctionstring(body, params = []) {
+		var js;
 		try {
-			var js = new Function(params.join(","), body).toString();
+			js = "'use strict'\n;" + body;
+			js = new Function(params.join(","), body).toString();
 			js = js.replace(/^function anonymous/, "function $edbml");
 			js = js.replace(/\&quot;\&apos;/g, "&quot;");
 			return js;

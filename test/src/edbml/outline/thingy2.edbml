@@ -10,9 +10,8 @@
 			<td class="last" id="last">${ged.lasttname}</td>
 		</tr>
 	</table>
-	// here's a single comment :/
-	// and another single comment
-	<a href="http://this.should.not.be.stripped">Hello</a>
+	@id = 'ole';
+	<a @id href="http://this.should.not.be.stripped">Hello</a>
 	<div id="hans" +
 		class="jens" +
 		title="ole">

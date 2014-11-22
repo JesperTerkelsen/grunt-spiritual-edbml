@@ -22,14 +22,15 @@ class FunctionCompiler extends Compiler {
 			this._validate,
 			this._extract,
 			this._direct,
+			this._compile,
 			this._definehead,
 			this._injecthead,
-			this._compile,
 			this._macromize
 		];
 
 		/**
-		 * Hm.
+		 * Options from Grunt.
+		 * @type {Map}
 		 */
 		this._options = null;
 
@@ -58,7 +59,7 @@ class FunctionCompiler extends Compiler {
 		this._params = null;
 
 		/**
-		 * Imported functions.
+		 * Tracking imported functions.
 		 * @type {Map<string,string>}
 		 */
 		this._functions = {};
@@ -71,7 +72,7 @@ class FunctionCompiler extends Compiler {
 	}
 
 	/**
-	 * Compile source to invocable function.
+	 * Compile EDBML source to function.
 	 * @param {string} source
 	 * @param {Map<string,string} options
 	 * @param {???} macros
@@ -151,7 +152,6 @@ class FunctionCompiler extends Compiler {
 				break;
 			case "function":
 				this._functions[att.name] = att.src;
-				//this._head[att.name] = att.src + '.lock(out)';
 				break;
 		}
 	}
@@ -159,8 +159,7 @@ class FunctionCompiler extends Compiler {
 	/**
 	 * Define stuff in head. Using var name underscore hack
 	 * to bypass the macro hygiene, will be normalized later. 
-	 * TODO: Restructure this._sequence so that we don't 
-	 * declare stuff in head that isn't actually used.
+	 * TODO: In string checks, also check for starting '('
 	 * @param {string} script
 	 * @param {object} head
 	 * @returns {string}
@@ -172,9 +171,18 @@ class FunctionCompiler extends Compiler {
 		if (params.indexOf("out") < 0) {
 			head.out = "$edbml.$out__MACROFIX";
 		}
-		head.$att__MACROFIX = '$edbml.$att__MACROFIX';
-		head.$txt = 'edbml.safetext';
-		head.$val = 'edbml.safeattr';
+		if(script.contains('$att')) {
+			head.$att__MACROFIX = '$edbml.$att__MACROFIX';
+		}
+		if(script.contains('$set')) {
+			head.$set = 'edbml.$set';
+		}
+		if(script.contains('$txt')) {
+			head.$txt = 'edbml.safetext';
+		}
+		if(script.contains('$val')) {
+			head.$val = 'edbml.safeattr';
+		}
 		each(functions, function(name, src) {
 			head[name] = src + '.lock(out)';
 		});
@@ -189,9 +197,10 @@ class FunctionCompiler extends Compiler {
 	 * @returns {string}
 	 */
 	_injecthead(script, head) {
-		return 'var ' + each(this._head, (name, value) => {
-			return name + ' = ' + value;
-		}).join(',') + ';' + script;
+		return "'use strict';\n" +
+			'var ' + each(this._head, (name, value) => {
+				return name + (value !== undefined ? ' = ' + value : '');
+			}).join(',') + ';' + script;
 	}
 
 	/**

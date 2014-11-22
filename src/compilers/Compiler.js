@@ -7,10 +7,10 @@
 class Compiler {
 
 	/**
-	 * Let's increment keys.
+	 * Let's go.
 	 */
 	constructor() {
-		this._keycounter = 1;
+		this._keycounter = 0;
 	}
 
 	/**
@@ -73,7 +73,7 @@ class Compiler {
 				}
 			}
 		}
-		if(runner.done) {
+		if (runner.done) {
 			markup.debug();
 		}
 	}
@@ -90,7 +90,7 @@ class Compiler {
 		var runner = new Runner();
 		var status = new Status();
 		var markup = new Markup();
-		var output = new Output("'use strict';\n");
+		var output = new Output();
 		runner.run(this, script, status, markup, output);
 		output.body += (status.ishtml() ? "';" : "") + "\nreturn out.write ();";
 		return output.body;
@@ -130,7 +130,7 @@ class Compiler {
 	 */
 	_compilehtml(c, runner, status, markup, output) {
 		var special = status.peek || status.poke || status.geek;
-		if(!this._continueshtml(c, runner, status)) {
+		if (!this._continueshtml(c, runner, status)) {
 			var context = markup.next(c);
 			switch (c) {
 				case "{":
@@ -199,7 +199,7 @@ class Compiler {
 	}
 
 	/**
-	 * HTML continues on next line or 
+	 * HTML continues on next line or
 	 * was continued from previous line?
 	 * @param {string} c
 	 * @param {Runner} runner
@@ -207,7 +207,7 @@ class Compiler {
 	 * @returns {boolean}
 	 */
 	_continueshtml(c, runner, status) {
-		if(c === "+") {
+		if (c === "+") {
 			if (runner.firstchar) {
 				status.skip = status.adds ? 1 : 0;
 				return true;
@@ -221,13 +221,13 @@ class Compiler {
 	}
 
 	/**
-	 * Get function to escape potentially 
+	 * Get function to escape potentially
 	 * unsafe text in given markup context.
 	 * @param {string} context Markup state
 	 * @returns {string} Function name
 	 */
 	_escapefrom(context) {
-		switch(context) {
+		switch (context) {
 			case Markup.CONTEXT_TXT:
 				return '$txt';
 			case Markup.CONTEXT_VAL:
@@ -249,8 +249,7 @@ class Compiler {
 		var rest, name, dels, what;
 		if (runner.behind("@")) {} else if (runner.behind("#{")) {
 			console.error("todo");
-		}
-		else if (runner.ahead("@")) {
+		} else if (runner.ahead("@")) {
 			output.body += "' + $att.$all() + '";
 			status.skip = 2;
 		} else {
@@ -265,48 +264,55 @@ class Compiler {
 	}
 
 	/**
-	 * Generate poke at marked spot.
+	 * Generate $poke at marked spot.
 	 * @param {Status} status
 	 * @param {Markup} markup
 	 * @param {Output} output
 	 */
 	_poke(status, markup, output) {
-		this._injectcombo(status, markup, output, Compiler._POKE);
+		var tag = markup.tag || '';
+		var arg = tag.match(/input|textarea/) ? 'value, checked' : '';
+		this._injectcombo(status, markup, output, {
+			outline: "var $name = $set(function(" + arg + ") {\n$temp;\n}, this);",
+			inline: "edbml.$run(event, \\'\' + $name + \'\\');"
+		});
 	}
 
 	/**
-	 * Generate geek at marked spot.
+	 * Generate ?geek at marked spot.
 	 * @param {Status} status
 	 * @param {Markup} markup
 	 * @param {Output} output
 	 */
 	_geek(status, markup, output) {
-		this._injectcombo(status, markup, output, Compiler._GEEK);
+		this._injectcombo(status, markup, output, {
+			outline: "var $name = $set(function() {\nreturn $temp;\n}, this);",
+			inline: "edbml.$get(&quot;\' + $name + \'&quot;);"
+		});
 	}
 
 	/**
-	 * Inject JS (outline and inline combo) at marked spot.
+	 * Inject outline and inline combo at marked spot.
 	 * @param {Status} status
 	 * @param {Markup} markup
 	 * @param {Output} output
-	 * @param {Map<String,String>} js
+	 * @param {Map<string,string>} combo
 	 */
-	_injectcombo(status, markup, output, js) {
+	_injectcombo(status, markup, output, combo) {
 		var body = output.body,
 			temp = output.temp,
 			spot = status.spot,
 			prev = body.substring(0, spot),
 			next = body.substring(spot),
-			name = '$edbml' + (this._keycounter++);
-		var outl = js.outline.replace("$name", name).replace("$temp", temp);
+			name = '$' + (++this._keycounter);
+		var outl = combo.outline.replace("$name", name).replace("$temp", temp);
 		output.body =
 			prev + "\n" +
 			outl +
 			next +
-			js.inline.replace("$name", name);
+			combo.inline.replace("$name", name);
 		status.spot += outl.length + 1;
 	}
-
 }
 
 
@@ -316,20 +322,21 @@ class Compiler {
  * Poke.
  * TODO: Analyze output.body and only append value+checked on input fields.
  * @type {string}
- */
+ *
 Compiler._POKE = {
-	outline: "var $name = edbml.$set(function(value, checked) {\n$temp;\n}, this);",
-	inline: "edbml.$run(event,&quot;\' + $name + \'&quot;);"
+	outline: "var $name = $set(function(value, checked) {\n$temp;\n}, this);",
+	inline: "edbml.$run(event, \\'\' + $name + \'\\');"
 };
 
 /**
  * Geek.
  * @type {string}
- */
+ *
 Compiler._GEEK = {
-	outline: "var $name = edbml.$set(function() {\nreturn $temp;\n}, this);",
+	outline: "var $name = $set(function() {\nreturn $temp;\n}, this);",
 	inline: "edbml.$get(&quot;\' + $name + \'&quot;);"
 };
+*/
 
 /**
  * Matches a qualified attribute name (class,id,src,href) allowing
