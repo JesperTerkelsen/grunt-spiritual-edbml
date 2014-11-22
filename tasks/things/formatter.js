@@ -47,7 +47,7 @@ function beautyoptions() {
 	return {
 		preset: "default",
 		indent: {
-			value: "\t"
+			value: "    "
 		},
 		lineBreak: {
 			keepEmptyLines: 0
@@ -64,8 +64,8 @@ function beautyoptions() {
 function simplified(js) {
 	var is = false;
 	var go = false;
-	var here = 'out.html += ';
-	var gone = '            ';
+	var here = 'out.html += '; // hardcoced
+	var gone = '            '; // hardcoded to equal length
 	var fixes = [];
 	var lines = js.split('\n').map(function(line, index) {
 		go = line.trim().startsWith(here);

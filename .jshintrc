@@ -18,6 +18,7 @@
 		"FunctionResult" : true,
 		"ScriptResult" : true,
 		"Instruction" : true,
+		"Stripper" : true,
 		"Result" : true,
 		"Runner" : true,
 		"Status" : true,

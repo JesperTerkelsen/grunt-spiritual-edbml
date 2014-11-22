@@ -1,10 +1,8 @@
 "use strict";
 
 /**
- * Compiler base. Mostly just so we can spli the logic into more files.
+ * Base compiler.
  * Note to self: Conceptualize peek|poke|geek|passout|lockout
- * @see {FunctionCompiler}
- * @see {ScriptCompiler}
  */
 class Compiler {
 

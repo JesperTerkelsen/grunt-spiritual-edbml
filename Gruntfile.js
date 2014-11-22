@@ -8,14 +8,6 @@ module.exports = function(grunt) {
 	// load tasks via package.json
 	require('load-grunt-tasks')(grunt);
 
-	/*
-	try { // first grunt will build a fake module...
-		grunt.task.loadNpmTasks('grunt-spiritual-edbml');
-	} catch (missingModuleException) {
-		grunt.log.error('Before we can run tests, please run grunt:init');
-	}
-	*/
-
 	if(grunt.file.exists('node_modules/grunt-spiritual-edbml')) {
 		grunt.task.loadNpmTasks('grunt-spiritual-edbml');
 	} else {
@@ -65,6 +57,7 @@ module.exports = function(grunt) {
 					"compilers/FunctionCompiler.js",
 					"compilers/ScriptCompiler.js",
 					"helpers/Instruction.js",
+					"helpers/Stripper.js",
 					"helpers/Runner.js",
 					"helpers/Result.js",
 					"helpers/Status.js",
@@ -213,6 +206,6 @@ module.exports = function(grunt) {
 	grunt.registerTask("test", [
 		'clean',
 		'edbml',
-		'karma'
+		//'karma'
 	]);
 };

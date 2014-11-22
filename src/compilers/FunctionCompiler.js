@@ -1,8 +1,7 @@
 "use strict";
 
 /**
- * Compiling EDBML to JS.
- * TODO: precompiler to strip out both JS comments and HTML comments.
+ * Function compiler.
  * @extends {Compiler}
  */
 class FunctionCompiler extends Compiler {
@@ -96,72 +95,12 @@ class FunctionCompiler extends Compiler {
 	// Private ...................................................................
 
 	/**
-	 * Strip HTML comments.
+	 * Strip HTML and JS comments.
 	 * @param {string} script
 	 * @returns {string}
 	 */
 	_uncomment(script) {
-		script = this._stripout(script, '<!--', '-->');
-		script = this._stripout(script, '/*', '*/');
-		return script;
-	}
-
-	/**
-	 * TODO: This could do with some serious testing.
-	 * @param {string} s1
-	 * @param {string} s2
-	 * @returns {string}
-	 */
-	_stripout(script, s1, s2) {
-		var a1 = s1.split(''),
-			a2 = s2.split(''),
-			c1 = a1.shift(),
-			c2 = a2.shift();
-		s1 = a1.join('');
-		s2 = a2.join('');
-		var chars = null,
-			pass = false,
-			next = false,
-			fits = (i, l, s) => {
-				return chars.slice(i, l).join('') === s;
-			},
-			ahead = (i, s) => {
-				var l = s.length;
-				return fits(i, i + l, s);
-			},
-			prevs = (i, s) => {
-				var l = s.length;
-				return fits(i - l, i, s);
-			},
-			start = (c, i) => {
-				return c === c1 && ahead(i + 1, s1);
-			},
-			stops = (c, i) => {
-				return c === c2 && prevs(i, s2);
-			};
-		if (script.contains('<!--')) {
-			chars = script.split('');
-			return chars.map((chaa, i) => {
-				if (pass) {
-					if (stops(chaa, i)) {
-						next = true;
-					}
-				} else {
-					if (start(chaa, i)) {
-						pass = true;
-					}
-				}
-				if (pass || next) {
-					chaa = '';
-				}
-				if (next) {
-					pass = false;
-					next = false;
-				}
-				return chaa;
-			}).join('');
-		}
-		return script;
+		return new Stripper().strip(script);
 	}
 
 	/**
