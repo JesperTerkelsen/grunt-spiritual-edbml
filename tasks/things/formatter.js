@@ -47,7 +47,7 @@ function beautyoptions() {
 	return {
 		preset: "default",
 		indent: {
-			value: "    "
+			value: "  "
 		},
 		lineBreak: {
 			keepEmptyLines: 0

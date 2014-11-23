@@ -21,7 +21,6 @@ exports.process = function(grunt, files, options, macros, done) {
 			var sources = grunt.file.expand(files[target]);
 			var results = trawloutline(grunt, sources, options, macros);
 			if (results.length && !errors) {
-				//var text = formatter.beautify(results);
 				target = grunt.template.process(target);
 				grunt.file.write(target, results);
 				grunt.log.writeln("File " + chalk.cyan(target) + ' created.');
@@ -55,25 +54,23 @@ var errors = false;
  * @param {string} message
  */
 function error(message) {
-	//grunt.log.error ( message );
 	console.error(message);
 	errors = true;
 }
 
 /**
- * @returns {Array<Output>}
  * @returns {string}
  */
 function trawloutline(grunt, sources, options, macros) {
-	var results = [];
+	var js, $, results = [];
 	sources.forEach(function(src) {
-		var $ = cheerio.load(grunt.file.read(src));
+		$ = cheerio.load(grunt.file.read(src));
 		getscripts($, src, options).each(function(i, script) {
-			var js = parse($(script), options, macros);
+			js = parse($(script), options, macros);
 			results.push(comment(src) + formatter.beautify(js));
 		});
 	});
-	return results.join("\n\n"); // beautfier will strip this :/
+	return results.join("\n\n");
 }
 
 /**

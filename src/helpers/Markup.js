@@ -7,8 +7,10 @@
 class Markup {
 
 	constructor() {
+		
 		this.tag = null; // current tagname (if applicable)
 		this.att = null; // current attname (not maintained!)
+
 		this._is = null;
 		this._buffer = null;
 		this._quotes = null;
