@@ -5,7 +5,8 @@
 	</head>
 	<body class="gui-spirit">
 		<script type="text/edbml">
-			<h1>Is it working?</h1>
+			@class = 'test';
+			<h1 @class>Is it working?</h1>
 		</script>
 	</body>
 </html>

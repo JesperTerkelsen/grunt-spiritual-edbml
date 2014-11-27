@@ -256,7 +256,7 @@ class Compiler {
 			rest = runner.lineahead();
 			name = attr.exec(rest)[0];
 			dels = runner.behind("-");
-			what = dels ? "$att.$pop" : "$att.$html";
+			what = dels ? "$att.$pop" : "$att.$";
 			output.body = dels ? output.body.substring(0, output.body.length - 1) : output.body;
 			output.body += "' + " + what + " ( '" + name + "' ) + '";
 			status.skip = name.length + 1;
@@ -317,26 +317,6 @@ class Compiler {
 
 
 // Static ......................................................................
-
-/**
- * Poke.
- * TODO: Analyze output.body and only append value+checked on input fields.
- * @type {string}
- *
-Compiler._POKE = {
-	outline: "var $name = $set(function(value, checked) {\n$temp;\n}, this);",
-	inline: "edbml.$run(event, \\'\' + $name + \'\\');"
-};
-
-/**
- * Geek.
- * @type {string}
- *
-Compiler._GEEK = {
-	outline: "var $name = $set(function() {\nreturn $temp;\n}, this);",
-	inline: "edbml.$get(&quot;\' + $name + \'&quot;);"
-};
-*/
 
 /**
  * Matches a qualified attribute name (class,id,src,href) allowing

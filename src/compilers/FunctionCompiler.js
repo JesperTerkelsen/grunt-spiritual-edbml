@@ -171,7 +171,7 @@ class FunctionCompiler extends Compiler {
 		if (params.indexOf("out") < 0) {
 			head.out = "$edbml.$out__MACROFIX";
 		}
-		if(script.contains('$att')) {
+		if(script.contains('@')) { // TODO: run macros FIRST at look for '$att' ???
 			head.$att__MACROFIX = '$edbml.$att__MACROFIX';
 		}
 		if(script.contains('$set')) {
