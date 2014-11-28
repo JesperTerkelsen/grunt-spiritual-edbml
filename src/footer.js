@@ -1,11 +1,11 @@
 "use strict";
 
 /**
- * @param {String} source
+ * @param {string} source
  * @param {Map<String,object>} options
  * @param {???} macros
  * @param {Map<String,object>} directives
- * @returns {String}
+ * @returns {string}
  */
 exports.compile = function(edbml, options, macros, directives) {
 	if (edbml.contains("<?input")) {

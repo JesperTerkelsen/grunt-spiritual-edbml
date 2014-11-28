@@ -1,9 +1,8 @@
 "use strict";
 
 /**
- * Compiling EDBML source to JavaScript.
+ * Function compiler.
  * @extends {Compiler}
- * TODO: precompiler to strip out both JS comments and HTML comments.
  */
 class FunctionCompiler extends Compiler {
 
@@ -23,14 +22,15 @@ class FunctionCompiler extends Compiler {
 			this._validate,
 			this._extract,
 			this._direct,
+			this._compile,
 			this._definehead,
 			this._injecthead,
-			this._compile,
 			this._macromize
 		];
 
 		/**
-		 * Hm.
+		 * Options from Grunt.
+		 * @type {Map}
 		 */
 		this._options = null;
 
@@ -53,10 +53,16 @@ class FunctionCompiler extends Compiler {
 		this._instructions = null;
 
 		/**
-		 * Compiled function arguments list.
+		 * Compiled arguments list.
 		 * @type {Array<string>}
 		 */
 		this._params = null;
+
+		/**
+		 * Tracking imported functions.
+		 * @type {Map<string,string>}
+		 */
+		this._functions = {};
 
 		/**
 		 * Did compilation fail just yet?
@@ -66,7 +72,7 @@ class FunctionCompiler extends Compiler {
 	}
 
 	/**
-	 * Compile source to invocable function.
+	 * Compile EDBML source to function.
 	 * @param {string} source
 	 * @param {Map<string,string} options
 	 * @param {???} macros
@@ -78,6 +84,7 @@ class FunctionCompiler extends Compiler {
 		this._options = options || {};
 		this._macros = macros;
 		this._params = [];
+		this._functions = {};
 		this._head = {};
 		source = this._sequence.reduce((s, step) => {
 			return step.call(this, s);
@@ -89,71 +96,12 @@ class FunctionCompiler extends Compiler {
 	// Private ...................................................................
 
 	/**
-	 * Strip HTML comments.
+	 * Strip HTML and JS comments.
 	 * @param {string} script
 	 * @returns {string}
 	 */
 	_uncomment(script) {
-		script = this._stripout(script, '<!--', '-->');
-		script = this._stripout(script, '/*', '*/');
-		return script;
-	}
-
-	/**
-	 * @param {string} s1
-	 * @param {string} s2
-	 * @returns {string}
-	 */
-	_stripout(script, s1, s2) {
-		var a1 = s1.split(''),
-			a2 = s2.split(''),
-			c1 = a1.shift(),
-			c2 = a2.shift();
-		s1 = a1.join('');
-		s2 = a2.join('');
-		var chars = null,
-			pass = false,
-			next = false,
-			fits = (i, l, s) => {
-				return chars.slice(i, l).join('') === s;
-			},
-			ahead = (i, s) => {
-				var l = s.length;
-				return fits(i, i + l, s);
-			},
-			prevs = (i, s) => {
-				var l = s.length;
-				return fits(i - l, i, s);
-			},
-			start = (c, i) => {
-				return c === c1 && ahead(i + 1, s1);
-			},
-			stops = (c, i) => {
-				return c === c2 && prevs(i, s2);
-			};
-		if (script.contains('<!--')) {
-			chars = script.split('');
-			return chars.map((chaa, i) => {
-				if (pass) {
-					if (stops(chaa, i)) {
-						next = true;
-					}
-				} else {
-					if (start(chaa, i)) {
-						pass = true;
-					}
-				}
-				if (pass || next) {
-					chaa = '';
-				}
-				if (next) {
-					pass = false;
-					next = false;
-				}
-				return chaa;
-			}).join('');
-		}
-		return script;
+		return new Stripper().strip(script);
 	}
 
 	/**
@@ -197,54 +145,73 @@ class FunctionCompiler extends Compiler {
 	 * @param {Instruction} pi
 	 */
 	_instruct(pi) {
-		var type = pi.tag;
-		var atts = pi.att;
-		var name = atts.name;
-		switch (type) {
+		var att = pi.att;
+		switch (pi.tag) {
 			case "param":
-				this._params.push(name);
+				this._params.push(att.name);
+				break;
+			case "function":
+				this._functions[att.name] = att.src;
 				break;
 		}
 	}
 
 	/**
-	 * Define stuff in head. Using var name underscore hack 
-	 * to bypass the macro hygiene, will be normalized later.
+	 * Define stuff in head. Using var name underscore hack
+	 * to bypass the macro hygiene, will be normalized later. 
+	 * TODO: In string checks, also check for starting '('
 	 * @param {string} script
 	 * @param {object} head
 	 * @returns {string}
 	 */
 	_definehead(script) {
-		if (this._params.indexOf("out") < 0) {
-			this._head.out = "$edbml.__$out__";
+		var head = this._head;
+		var params = this._params;
+		var functions = this._functions;
+		if (params.indexOf("out") < 0) {
+			head.out = "$edbml.$out__MACROFIX";
 		}
-		this._head.__$att__ = '$edbml.__$att__';
+		if(script.contains('@')) { // TODO: run macros FIRST at look for '$att' ???
+			head.$att__MACROFIX = '$edbml.$att__MACROFIX';
+		}
+		if(script.contains('$set')) {
+			head.$set = 'edbml.$set';
+		}
+		if(script.contains('$txt')) {
+			head.$txt = 'edbml.safetext';
+		}
+		if(script.contains('$val')) {
+			head.$val = 'edbml.safeattr';
+		}
+		each(functions, function(name, src) {
+			head[name] = src + '.lock(out)';
+		});
 		return script;
 	}
 
 	/**
-	 * Inject stuff in head.
+	 * Inject stuff in head. Let's just hope that V8 keeps on iterating 
+	 * object keys in chronological order (in which they were defined).
 	 * @param {string} script
 	 * @param {object} head
 	 * @returns {string}
 	 */
 	_injecthead(script, head) {
-		return 'var ' + each(this._head, (name, value) => {
-			return name + ' = ' + value;
-		}).join(',') + ';' + script;
+		return "'use strict';\n" +
+			'var ' + each(this._head, (name, value) => {
+				return name + (value !== undefined ? ' = ' + value : '');
+			}).join(',') + ';' + script;
 	}
 
 	/**
-	 * Release the macros. Normalize variable names that were 
+	 * Release the macros. Normalize variable names that were
 	 * hacked  to bypass the internal macro hygiene routine.
 	 * @param {string} script
 	 * @returns {string}
 	 */
 	_macromize(script) {
-		var macros = this._macros;
-		return (macros ? macros.compile(script) : script).
-			replace(/__\$out__/g, '$out').
-			replace(/__\$att__/g, '$att');
+		script = this._macros ? this._macros.compile(script) : script;
+		return script.replace(/__MACROFIX/g, '');
 	}
 
 	/**
@@ -263,7 +230,7 @@ class FunctionCompiler extends Compiler {
 // Static ......................................................................
 
 /**
- * RegExp used to validate no nested scripts. Important back when all this was a 
+ * RegExp used to validate no nested scripts. Important back when all this was a
  * clientside framework because the browser can't parse nested scripts, nowadays
  * it might be practical?
  * http://stackoverflow.com/questions/1441463/how-to-get-regex-to-match-multiple-script-tags

@@ -5,10 +5,10 @@ var uglifier = require("uglify-js");
 
 /**
  * Format JS for readability.
- * @param {String} js
- * @param {String} tab
+ * @param {string} js
+ * @param {string} tab
  * @param {boolean} buffer (boolean?)
- * @returns {String}
+ * @returns {string}
  */
 exports.beautify = function(js, tab, buffer) {
 	tab = tab || '';
@@ -24,8 +24,8 @@ exports.beautify = function(js, tab, buffer) {
 
 /**
  * Compute compressed source for file.
- * @param {String} filepath The file path
- * @returns {String}
+ * @param {string} filepath The file path
+ * @returns {string}
  */
 exports.uglify = function(js) {
 	return uglifier.minify(js, {
@@ -47,7 +47,7 @@ function beautyoptions() {
 	return {
 		preset: "default",
 		indent: {
-			value: "\t"
+			value: "  "
 		},
 		lineBreak: {
 			keepEmptyLines: 0
@@ -64,8 +64,8 @@ function beautyoptions() {
 function simplified(js) {
 	var is = false;
 	var go = false;
-	var here = 'out.html += ';
-	var gone = '            ';
+	var here = 'out.html += '; // hardcoced
+	var gone = '            '; // hardcoded to equal length
 	var fixes = [];
 	var lines = js.split('\n').map(function(line, index) {
 		go = line.trim().startsWith(here);

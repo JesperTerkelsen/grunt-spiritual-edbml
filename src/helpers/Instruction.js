@@ -3,12 +3,12 @@
 /**
  * EDB processing instruction.
  * TODO: Problem with one-letter variable names in <?input name="a" type="TestData"?>
- * @param {String} pi
+ * @param {string} pi
  */
 class Instruction {
 
 	/**
-	 * @param {String} pi
+	 * @param {string} pi
 	 */
 	constructor(pi) {
 		this.tag = pi.split("<?")[1].split(" ")[0];
@@ -27,7 +27,7 @@ class Instruction {
 
 /**
  * Extract processing instructions from source.
- * @param {String} source
+ * @param {string} source
  * @returns {Array<Instruction>}
  */
 Instruction.from = function(source) {
@@ -41,8 +41,8 @@ Instruction.from = function(source) {
 
 /**
  * Remove processing instructions from source.
- * @param {String} source
- * @returns {String}
+ * @param {string} source
+ * @returns {string}
  */
 Instruction.clean = function(source) {
 	return source.replace(this._PIEXP, "");

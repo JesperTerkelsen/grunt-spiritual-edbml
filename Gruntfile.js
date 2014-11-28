@@ -1,31 +1,50 @@
 /**
- * TODO: http://stackoverflow.com/questions/13358680/how-to-config-grunt-js-to-minify-files-separately
  * @param {Grunt} grunt
  */
-module.exports = function ( grunt ) {
+module.exports = function(grunt) {
 
 	"use strict";
 
 	// load tasks via package.json
 	require('load-grunt-tasks')(grunt);
 
-	try { // first grunt will build a fake module...
+	if(grunt.file.exists('node_modules/grunt-spiritual-edbml')) {
 		grunt.task.loadNpmTasks('grunt-spiritual-edbml');
-	} catch(missingModuleException) {
-		console.log('First build :)');
+	} else {
+		grunt.log.error(
+			'Please run grunt:init to build grunt-spiritual-edbml \n' +
+			'into the node_modules folder so that we can test it.'
+		);
 	}
 
-	var options = grunt.file.readJSON ( ".jshintrc" );
+	// JSHint options
+	var options = grunt.file.readJSON('.jshintrc');
 	options.unused = false;
 
-	grunt.initConfig ({
+
+	// Config ....................................................................
+
+	grunt.initConfig({
+
+		// remove old tests
+		clean: [
+			'test/build/**.*'
+		],
+
+		// validate you all
 		jshint: {
-			fisse : {
-				jshintrc : ".jshintrc",
+			validate: {
 				options: options,
-				src: [ "Gruntfile.js", "tasks/src/**/*.js" ]
+				jshintrc: '.jshintrc',
+				src: [
+					'Gruntfile.js',
+					'src/**/*.js',
+					'tasks/src/**/*.js'
+				]
 			}
 		},
+
+		// concat twice, before and after transpilation
 		concat: {
 			before: {
 				options: {
@@ -38,12 +57,14 @@ module.exports = function ( grunt ) {
 					"compilers/FunctionCompiler.js",
 					"compilers/ScriptCompiler.js",
 					"helpers/Instruction.js",
+					"helpers/Stripper.js",
 					"helpers/Runner.js",
 					"helpers/Result.js",
 					"helpers/Status.js",
+					"helpers/Markup.js",
 					"helpers/Output.js",
 					"footer.js"
-				].map ( function ( src ) {
+				].map(function(src) {
 					return "src/" + src;
 				})
 			},
@@ -54,7 +75,7 @@ module.exports = function ( grunt ) {
 					process: function(src, filepath) {
 						return '// Source: ' + filepath + '\n' +
 							src.replace(/(^|\n)[ \t]*('use strict');?\s*/g, '$1').
-									replace(/(^|\n)[ \t]*("use strict");?\s*/g, '$1');
+						replace(/(^|\n)[ \t]*("use strict");?\s*/g, '$1');
 					},
 				},
 				dest: 'tasks/things/compiler.js',
@@ -62,21 +83,20 @@ module.exports = function ( grunt ) {
 			}
 		},
 
+		// transpile to es5
 		es5to6: {
-			testingit: {
+			transpile: {
 				files: {
-					'build/compiler-es5.js' : 'build/compiler-es6.js'
+					'build/compiler-es5.js': 'build/compiler-es6.js'
 				}
 			}
 		},
 
-		/**
-		 *
-		 */
+		// watch out
 		watch: {
 			scripts: {
-				files: [ "**/*.js" ],
-				tasks: [ 
+				files: ["**/*.js"],
+				tasks: [
 					'concat:before',
 					'es5to6',
 					'concat:after'
@@ -87,69 +107,105 @@ module.exports = function ( grunt ) {
 			}
 		},
 
-		/*
-		 * Manually install a build of this project in the 
-		 * the node_modules folder so that we can test it.
-		 */
+		// manually install a build of this project in the
+		// the node_modules folder so that we can test it.
 		copy: {
 			fake_node_module: {
 				files: [{
-					expand: true, 
-					cwd: '.', 
+					expand: true,
+					cwd: '.',
 					src: [
 						'*.*',
-						'tasks/**',
-						//'node_modules/**'
+						'tasks/**'
 					],
 					dest: 'node_modules/grunt-spiritual-edbml'
 				}]
 			}
 		},
 
-		// testing it out...
+		// run this grunt task (because we copied 
+		// ourselves into node_modules) on tests.
 		edbml: {
-			outline: {
-				options : {},
-				files : {
-					"test/testing.js" : [ "test/*.edbml" ]
+			test_outline: {
+				options: {},
+				files: {
+					"test/build/js/outline.js": ["test/src/edbml/outline/**/*.edbml"]
 				}
+				/*
+				expand: true,
+				dest: 'test/out/inline',
+				cwd: 'test/src/inline',
+				src: ['*.edbml']
+				*/
 			},
-			inline : {
-				options : {
-					inline : true,
+			test_inline: {
+				options: {
+					inline: true,
 					beautify: true
 				},
 				expand: true,
-				dest: 'test/inline',
-				cwd: 'test/inline',
+				dest: 'test/build/html',
+				cwd: 'test/src/edbml/inline',
 				src: ['*.edbml']
 			}
+		},
+
+		// testing the stuff
+		karma: {
+			options: {
+				configFile: 'test/karma.conf.js'
+			},
+			unit: {
+				browsers: ['Chrome'],
+				singleRun: true
+			}
 		}
-		
+
 	});
 
-	// build
-	grunt.registerTask ( "default", [
-		'concat:before',
-		'es5to6',
-		'concat:after',
-		'copy:fake_node_module'
-	]);
-
-	// test
-	grunt.registerTask ( "test", [
-		'edbml'
-	]);
+	// Custom tasks ..............................................................
 
 	/**
-	 * Compile ES5 to ES6. Isn't it great.
+	 * Compile ES5 to ES6.
 	 */
 	grunt.registerMultiTask('es5to6', 'It\'s a way to make a living', function() {
-		var files = this.data.files, to5 = require("6to5");
+		var files = this.data.files,
+			to5 = require("6to5");
 		Object.keys(files).forEach(function(target) {
 			var source = files[target];
 			source = grunt.file.read(source);
 			grunt.file.write(target, to5.transform(source).code);
 		});
 	});
+
+
+	// Command line tasks ........................................................
+
+	/**
+	 * Build sequence.
+	 * @returns {Array<string>}
+	 */
+	function build() {
+		return [
+			'jshint',
+			'concat:before',
+			'es5to6',
+			'concat:after'
+		];
+	}
+
+	// simply build the stuff
+	grunt.registerTask("default", build());
+
+	// build first time (how to go about this?)
+	grunt.registerTask('init', build().concat([
+		'copy:fake_node_module'
+	]));
+
+	// test that build
+	grunt.registerTask("test", [
+		'clean',
+		'edbml',
+		//'karma'
+	]);
 };

@@ -17,7 +17,7 @@ function each(object, func, thisp) {
  * Autocast string to an inferred type. "123" returns a number
  * while "true" and false" return a boolean. Empty string evals
  * to `true` in order to support HTML attribute minimization.
- * @param {String} string
+ * @param {string} string
  * @returns {object}
  */
 function cast(string) {
@@ -44,7 +44,7 @@ function cast(string) {
 /**
  * Generate unique key.
  * Note: Key structure must be kept in sync with {gui.KeyMaster#generatekey}.
- * @returns {String}
+ * @returns {string}
  */
 var generateKey = (function() {
 	var keys = {};

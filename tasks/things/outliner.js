@@ -21,9 +21,8 @@ exports.process = function(grunt, files, options, macros, done) {
 			var sources = grunt.file.expand(files[target]);
 			var results = trawloutline(grunt, sources, options, macros);
 			if (results.length && !errors) {
-				var text = formatter.beautify(results);
 				target = grunt.template.process(target);
-				grunt.file.write(target, text);
+				grunt.file.write(target, results);
 				grunt.log.writeln("File " + chalk.cyan(target) + ' created.');
 			}
 		});
@@ -55,23 +54,20 @@ var errors = false;
  * @param {string} message
  */
 function error(message) {
-	//grunt.log.error ( message );
 	console.error(message);
 	errors = true;
 }
 
 /**
- * @returns {Array<Output>}
  * @returns {string}
  */
 function trawloutline(grunt, sources, options, macros) {
-	var results = [];
+	var js, $, results = [];
 	sources.forEach(function(src) {
-		var $ = cheerio.load(grunt.file.read(src));
+		$ = cheerio.load(grunt.file.read(src));
 		getscripts($, src, options).each(function(i, script) {
-			results.push(
-				parse($(script), options, macros)
-			);
+			js = parse($(script), options, macros);
+			results.push(comment(src) + formatter.beautify(js));
 		});
 	});
 	return results.join("\n\n");
@@ -134,4 +130,13 @@ function parse(script, options, macros) {
 function compile(name, edbml, options, macros, directives) {
 	var result = compiler.compile(edbml, options, macros, directives);
 	return assistant.declare(name, result);
+}
+
+/**
+ * Stamp the EDBML src into a comment.
+ * @param {string} src
+ * @returns {string}
+ */
+function comment(src) {
+	return '// ' + src + '\n';
 }

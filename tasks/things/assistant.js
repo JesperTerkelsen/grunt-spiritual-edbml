@@ -4,8 +4,8 @@ var shorthash = require("./shorthash");
 
 /**
  * Genereate hash for file name.
- * @param {String} string
- * @returns {String}
+ * @param {string} string
+ * @returns {string}
  */
 exports.unique = function(filepath, index) {
 	return "$" + shorthash.unique(filepath) + index;
@@ -30,16 +30,17 @@ exports.directives = function(script, extras) {
 
 /**
  * Produce JS declarations.
- * @param {String} name
- * @param {String} name
- * @returns {String}
+ * @param {string} name
+ * @param {string} name
+ * @returns {string}
  */
 exports.declare = function(name, result) {
+	var json;
 	var fun = result.functionstring;
 	var pis = result.instructionset;
 	var output = "edbml.declare(\"" + name + "\").as(" + fun;
-	if (pis) {
-		var json = formatjson(pis);
+	if (pis && (pis = filterpis(pis)).length) {
+		json = formatjson(pis);
 		json = JSON.stringify(json);
 		json = json.replace(/"(\w+)"\s*:/g, '$1:');
 		output += ").withInstructions(" + json + ");";
@@ -48,6 +49,18 @@ exports.declare = function(name, result) {
 	}
 	return output;
 };
+
+/**
+ * Only relay <?input?> instructions to the client 
+ * since the rest aren't really needed right now.
+ * @param {Array<Instruction>} pis
+ * @returns {Array<Instruction>}
+ */
+function filterpis(pis) {
+	return pis.filter(function(pi) {
+		return pi.tag === 'input';
+	});
+}
 
 /**
  * Format processing instructions 
@@ -68,7 +81,7 @@ function formatjson(pis) {
  * Autocast string to an inferred type. "123" returns a number
  * while "true" and false" return a boolean. Empty string evals
  * to `true` in order to support HTML attribute minimization.
- * @param {String} string
+ * @param {string} string
  * @returns {object}
  */
 function autocast(string) {

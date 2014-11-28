@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * Add support for data types.
+ * Script compiler.
  * @extends {FunctionCompiler}
  */
 class ScriptCompiler extends FunctionCompiler {

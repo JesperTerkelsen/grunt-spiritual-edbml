@@ -1,0 +1,20 @@
+<!DOCTYPE edbml>
+<script>// COMMENT!
+	<?input name="ged" type="ged.GedModel"?>
+	<?function name="hans" src="ged.headline.edbml"?>
+	<!-- heres a comment -->
+	<table novalue title=noquotes id='singlequotes' class="doublequotes">
+		<tr style="color:${ged.color}">
+			/* Here's another comment! */
+			<td class="first" id="first">${ged.firstname}</td>
+			<td class="last" id="last">${ged.lasttname}</td>
+		</tr>
+	</table>
+	@id = 'ole';
+	<a @id href="http://this.should.not.be.stripped">Hello</a>
+	<div id="hans" +
+		class="jens" +
+		title="ole">
+		<span>Anders</span>
+	</div>
+</script>

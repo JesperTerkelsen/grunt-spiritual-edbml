@@ -1,0 +1,29 @@
+<!DOCTYPE edbml>
+<script>
+	<?function name="hans" src="hej.hans.jensen"?>
+	<?param name="header"?>
+	<?input name="ejner1" type="Johnson"?>
+	<?input name="ejner2" type="Johnson"?>
+	<?input name="ejner3" type="Johnson"?>
+	@john = 23;
+	@john += 7;
+	<table class="fisse">
+		<tr style="color:lime">
+			<td class="first" id="first">AAA</td>
+			<td class="last" id="last">BBB</td>
+		</tr>
+	</table>
+	console.log(@john);
+	function fisse() {
+		<h1 @john>${header}</h1>
+		<h1 @john>${header}</h1>
+		<h1 @john>${header}</h1>
+	}
+	function flemming() {
+		alert('Hello');
+	}
+	<h2 onclick="#{flemming()}">Hej</h2>
+	<h2>Hej</h2>
+	<h2>Hej</h2>
+	<h2>Hej</h2>
+</script>
