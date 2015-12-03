@@ -12,11 +12,6 @@ var _extends = function (child, parent) {
   child.__proto__ = parent;
 };
 
-var _classProps = function (child, staticProps, instanceProps) {
-  if (staticProps) Object.defineProperties(child, staticProps);
-  if (instanceProps) Object.defineProperties(child.prototype, instanceProps);
-};
-
 /**
  * Call function for each own key in object (exluding the prototype stuff)
  * with key and value as arguments. Returns array of function call results.
@@ -106,6 +101,10 @@ String.prototype.endsWith = function (string) {
 
 
 
+/**
+ * Base compiler.
+ * Note to self: Conceptualize peek|poke|geek|passout|lockout
+ */
 var Compiler = (function () {
   var Compiler =
 
@@ -116,348 +115,209 @@ var Compiler = (function () {
     this._keycounter = 0;
   };
 
-  _classProps(Compiler, null, {
-    newline: {
-      writable: true,
+  Compiler.prototype.newline = function (line, runner, status, markup, output) {
+    status.last = line.length - 1;
+    status.adds = line[0] === "+";
+    status.cont = status.cont || (status.ishtml() && status.adds);
+  };
 
-
-      /**
-       * Line begins.
-       * @param {string} line
-       * @param {Runner} runner
-       * @param {Status} status
-       * @param {Markup} markup
-       * @param {Output} output
-       */
-      value: function (line, runner, status, markup, output) {
-        status.last = line.length - 1;
-        status.adds = line[0] === "+";
-        status.cont = status.cont || (status.ishtml() && status.adds);
+  Compiler.prototype.endline = function (line, runner, status, markup, output) {
+    if (status.ishtml()) {
+      if (!status.cont) {
+        output.body += "';\n";
+        status.gojs();
       }
-    },
-    endline: {
-      writable: true,
+    } else {
+      output.body += "\n";
+    }
+    status.cont = false;
+  };
 
-
-      /**
-       * Line ends.
-       * @param {string} line
-       * @param {Runner} runner
-       * @param {Status} status
-       * @param {Markup} markup
-       * @param {Output} output
-       */
-      value: function (line, runner, status, markup, output) {
-        if (status.ishtml()) {
-          if (!status.cont) {
-            output.body += "';\n";
-            status.gojs();
-          }
-        } else {
-          output.body += "\n";
+  Compiler.prototype.nextchar = function (c, runner, status, markup, output) {
+    switch (status.mode) {
+      case Status.MODE_JS:
+        this._compilejs(c, runner, status, markup, output);
+        break;
+      case Status.MODE_HTML:
+        this._compilehtml(c, runner, status, markup, output);
+        break;
+    }
+    if (status.skip-- <= 0) {
+      if (status.poke || status.geek) {
+        output.temp += c;
+      } else {
+        if (!status.istag()) {
+          output.body += c;
         }
-        status.cont = false;
-      }
-    },
-    nextchar: {
-      writable: true,
-
-
-      /**
-       * Next char.
-       * @param {string} c
-       * @param {Runner} runner
-       * @param {Status} status
-       * @param {Markup} markup
-       * @param {Output} output
-       */
-      value: function (c, runner, status, markup, output) {
-        switch (status.mode) {
-          case Status.MODE_JS:
-            this._compilejs(c, runner, status, markup, output);
-            break;
-          case Status.MODE_HTML:
-            this._compilehtml(c, runner, status, markup, output);
-            break;
-        }
-        if (status.skip-- <= 0) {
-          if (status.poke || status.geek) {
-            output.temp += c;
-          } else {
-            if (!status.istag()) {
-              output.body += c;
-            }
-          }
-        }
-        if (runner.done) {
-          markup.debug();
-        }
-      }
-    },
-    _compile: {
-      writable: true,
-
-
-
-      // Private ...................................................................
-
-      /**
-       * Compile EDBML source to function body.
-       * @param {string} script
-       * @returns {string}
-       */
-      value: function (script) {
-        var runner = new Runner();
-        var status = new Status();
-        var markup = new Markup();
-        var output = new Output();
-        runner.run(this, script, status, markup, output);
-        output.body += (status.ishtml() ? "';" : "") + "\nreturn out.write ();";
-        return output.body;
-      }
-    },
-    _compilejs: {
-      writable: true,
-
-
-      /**
-       * Compile character as script.
-       * @param {string} c
-       * @param {Runner} runner
-       * @param {Status} status
-       * @param {Markup} markup
-       * @param {Output} output
-       */
-      value: function (c, runner, status, markup, output) {
-        switch (c) {
-          case "<":
-            if (runner.firstchar) {
-              status.gohtml();
-              markup.next(c);
-              status.spot = output.body.length - 1;
-              output.body += "out.html += '";
-            }
-            break;
-          case "@":
-            // handled by the @ macro
-            break;
-        }
-      }
-    },
-    _compilehtml: {
-      writable: true,
-
-
-      /**
-       * Compile character as HTML.
-       * @param {string} c
-       * @param {Runner} runner
-       * @param {Status} status
-       * @param {Markup} markup
-       * @param {Output} output
-       */
-      value: function (c, runner, status, markup, output) {
-        var special = status.peek || status.poke || status.geek;
-        if (!this._continueshtml(c, runner, status)) {
-          var context = markup.next(c);
-          switch (c) {
-            case "{":
-              if (special) {
-                status.curl++;
-              }
-              break;
-            case "}":
-              if (--status.curl === 0) {
-                if (status.peek) {
-                  status.peek = false;
-                  status.skip = 1;
-                  status.curl = 0;
-                  output.body += ") + '";
-                }
-                if (status.poke) {
-                  this._poke(status, markup, output);
-                  status.poke = false;
-                  output.temp = null;
-                  status.skip = 1;
-                  status.curl = 0;
-                }
-                if (status.geek) {
-                  this._geek(status, markup, output);
-                  status.geek = false;
-                  output.temp = null;
-                  status.skip = 1;
-                  status.curl = 0;
-                }
-              }
-              break;
-            case "$":
-              if (!special && runner.ahead("{")) {
-                status.peek = true;
-                status.skip = 2;
-                status.curl = 0;
-                output.body += "' + " + this._escapefrom(context) + " (";
-              }
-              break;
-            case "#":
-              if (!special && runner.ahead("{")) {
-                status.poke = true;
-                status.skip = 2;
-                status.curl = 0;
-                output.temp = "";
-              }
-              break;
-            case "?":
-              if (!special && runner.ahead("{")) {
-                status.geek = true;
-                status.skip = 2;
-                status.curl = 0;
-                output.temp = "";
-              }
-              break;
-            case "'":
-              if (!special) {
-                output.body += "\\";
-              }
-              break;
-            case "@":
-              this._htmlatt(runner, status, markup, output);
-              break;
-          }
-        }
-      }
-    },
-    _continueshtml: {
-      writable: true,
-
-
-      /**
-       * HTML continues on next line or
-       * was continued from previous line?
-       * @param {string} c
-       * @param {Runner} runner
-       * @param {Status} status
-       * @returns {boolean}
-       */
-      value: function (c, runner, status) {
-        if (c === "+") {
-          if (runner.firstchar) {
-            status.skip = status.adds ? 1 : 0;
-            return true;
-          } else if (runner.lastchar) {
-            status.cont = true;
-            status.skip = 1;
-            return true;
-          }
-        }
-        return false;
-      }
-    },
-    _escapefrom: {
-      writable: true,
-
-
-      /**
-       * Get function to escape potentially
-       * unsafe text in given markup context.
-       * @param {string} context Markup state
-       * @returns {string} Function name
-       */
-      value: function (context) {
-        switch (context) {
-          case Markup.CONTEXT_TXT:
-            return "$txt";
-          case Markup.CONTEXT_VAL:
-            return "$val";
-          default:
-            return "";
-        }
-      }
-    },
-    _htmlatt: {
-      writable: true,
-
-
-      /**
-       * Parse @ notation in HTML.
-       * @param {Runner} runner
-       * @param {Status} status
-       * @param {Markup} markup
-       * @param {Output} output
-       */
-      value: function (runner, status, markup, output) {
-        var attr = Compiler._ATTREXP;
-        var rest, name, dels, what;
-        if (runner.behind("@")) {} else if (runner.behind("#{")) {
-          console.error("todo");
-        } else if (runner.ahead("@")) {
-          output.body += "' + $att.$all() + '";
-          status.skip = 2;
-        } else {
-          rest = runner.lineahead();
-          name = attr.exec(rest)[0];
-          dels = runner.behind("-");
-          what = dels ? "$att.$pop" : "$att.$";
-          output.body = dels ? output.body.substring(0, output.body.length - 1) : output.body;
-          output.body += "' + " + what + " ( '" + name + "' ) + '";
-          status.skip = name.length + 1;
-        }
-      }
-    },
-    _poke: {
-      writable: true,
-
-
-      /**
-       * Generate $poke at marked spot.
-       * @param {Status} status
-       * @param {Markup} markup
-       * @param {Output} output
-       */
-      value: function (status, markup, output) {
-        var tag = markup.tag || "";
-        var arg = tag.match(/input|textarea/) ? "value, checked" : "";
-        this._injectcombo(status, markup, output, {
-          outline: "var $name = $set(function(" + arg + ") {\n$temp;\n}, this);",
-          inline: "edbml.$run(event, \\'' + $name + '\\');"
-        });
-      }
-    },
-    _geek: {
-      writable: true,
-
-
-      /**
-       * Generate ?geek at marked spot.
-       * @param {Status} status
-       * @param {Markup} markup
-       * @param {Output} output
-       */
-      value: function (status, markup, output) {
-        this._injectcombo(status, markup, output, {
-          outline: "var $name = $set(function() {\nreturn $temp;\n}, this);",
-          inline: "edbml.$get(&quot;' + $name + '&quot;);"
-        });
-      }
-    },
-    _injectcombo: {
-      writable: true,
-
-
-      /**
-       * Inject outline and inline combo at marked spot.
-       * @param {Status} status
-       * @param {Markup} markup
-       * @param {Output} output
-       * @param {Map<string,string>} combo
-       */
-      value: function (status, markup, output, combo) {
-        var body = output.body, temp = output.temp, spot = status.spot, prev = body.substring(0, spot), next = body.substring(spot), name = "$" + (++this._keycounter);
-        var outl = combo.outline.replace("$name", name).replace("$temp", temp);
-        output.body = prev + "\n" + outl + next + combo.inline.replace("$name", name);
-        status.spot += outl.length + 1;
       }
     }
-  });
+    if (runner.done) {
+      markup.debug();
+    }
+  };
+
+  Compiler.prototype._compile = function (script) {
+    var runner = new Runner();
+    var status = new Status();
+    var markup = new Markup();
+    var output = new Output();
+    runner.run(this, script, status, markup, output);
+    output.body += (status.ishtml() ? "';" : "") + "\nreturn out.write ();";
+    return output.body;
+  };
+
+  Compiler.prototype._compilejs = function (c, runner, status, markup, output) {
+    switch (c) {
+      case "<":
+        if (runner.firstchar) {
+          status.gohtml();
+          markup.next(c);
+          status.spot = output.body.length - 1;
+          output.body += "out.html += '";
+        }
+        break;
+      case "@":
+        // handled by the @ macro
+        break;
+    }
+  };
+
+  Compiler.prototype._compilehtml = function (c, runner, status, markup, output) {
+    var special = status.peek || status.poke || status.geek;
+    if (!this._continueshtml(c, runner, status)) {
+      var context = markup.next(c);
+      switch (c) {
+        case "{":
+          if (special) {
+            status.curl++;
+          }
+          break;
+        case "}":
+          if (--status.curl === 0) {
+            if (status.peek) {
+              status.peek = false;
+              status.skip = 1;
+              status.curl = 0;
+              output.body += ") + '";
+            }
+            if (status.poke) {
+              this._poke(status, markup, output);
+              status.poke = false;
+              output.temp = null;
+              status.skip = 1;
+              status.curl = 0;
+            }
+            if (status.geek) {
+              this._geek(status, markup, output);
+              status.geek = false;
+              output.temp = null;
+              status.skip = 1;
+              status.curl = 0;
+            }
+          }
+          break;
+        case "$":
+          if (!special && runner.ahead("{")) {
+            status.peek = true;
+            status.skip = 2;
+            status.curl = 0;
+            output.body += "' + " + this._escapefrom(context) + " (";
+          }
+          break;
+        case "#":
+          if (!special && runner.ahead("{")) {
+            status.poke = true;
+            status.skip = 2;
+            status.curl = 0;
+            output.temp = "";
+          }
+          break;
+        case "?":
+          if (!special && runner.ahead("{")) {
+            status.geek = true;
+            status.skip = 2;
+            status.curl = 0;
+            output.temp = "";
+          }
+          break;
+        case "'":
+          if (!special) {
+            output.body += "\\";
+          }
+          break;
+        case "@":
+          this._htmlatt(runner, status, markup, output);
+          break;
+      }
+    }
+  };
+
+  Compiler.prototype._continueshtml = function (c, runner, status) {
+    if (c === "+") {
+      if (runner.firstchar) {
+        status.skip = status.adds ? 1 : 0;
+        return true;
+      } else if (runner.lastchar) {
+        status.cont = true;
+        status.skip = 1;
+        return true;
+      }
+    }
+    return false;
+  };
+
+  Compiler.prototype._escapefrom = function (context) {
+    switch (context) {
+      case Markup.CONTEXT_TXT:
+        return "$txt";
+      case Markup.CONTEXT_VAL:
+        return "$val";
+      default:
+        return "";
+    }
+  };
+
+  Compiler.prototype._htmlatt = function (runner, status, markup, output) {
+    var attr = Compiler._ATTREXP;
+    var rest, name, dels, what;
+    if (runner.behind("@")) {} else if (runner.behind("#{")) {
+      console.error("todo");
+    } else if (runner.ahead("@")) {
+      output.body += "' + $att.$all() + '";
+      status.skip = 2;
+    } else {
+      rest = runner.lineahead();
+      name = attr.exec(rest)[0];
+      dels = runner.behind("-");
+      what = dels ? "$att.$pop" : "$att.$";
+      output.body = dels ? output.body.substring(0, output.body.length - 1) : output.body;
+      output.body += "' + " + what + " ( '" + name + "' ) + '";
+      status.skip = name.length + 1;
+    }
+  };
+
+  Compiler.prototype._poke = function (status, markup, output) {
+    var tag = markup.tag || "";
+    var arg = tag.match(/input|textarea/) ? "value, checked" : "";
+    this._injectcombo(status, markup, output, {
+      outline: "var $name = $set(function(" + arg + ") {\n$temp;\n}, this);",
+      inline: "edbml.$run(this, \\'' + $name + '\\');"
+    });
+  };
+
+  Compiler.prototype._geek = function (status, markup, output) {
+    this._injectcombo(status, markup, output, {
+      outline: "var $name = $set(function() {\nreturn $temp;\n}, this);",
+      inline: "edbml.$get(&quot;' + $name + '&quot;);"
+    });
+  };
+
+  Compiler.prototype._injectcombo = function (status, markup, output, combo) {
+    var body = output.body, temp = output.temp, spot = status.spot, prev = body.substring(0, spot), next = body.substring(spot), name = "$" + (++this._keycounter);
+    var outl = combo.outline.replace("$name", name).replace("$temp", temp);
+    output.body = prev + "\n" + outl + next + combo.inline.replace("$name", name);
+    status.spot += outl.length + 1;
+  };
 
   return Compiler;
 })();
@@ -478,6 +338,10 @@ Compiler._ATTREXP = /^[^\d][a-zA-Z0-9-_\.]+/;
 
 
 
+/**
+ * Function compiler.
+ * @extends {Compiler}
+ */
 var FunctionCompiler = (function (Compiler) {
   var FunctionCompiler =
 
@@ -538,204 +402,100 @@ var FunctionCompiler = (function (Compiler) {
 
   _extends(FunctionCompiler, Compiler);
 
-  _classProps(FunctionCompiler, null, {
-    compile: {
-      writable: true,
+  FunctionCompiler.prototype.compile = function (source, options, macros, directives) {
+    var _this = this;
+    this._directives = directives || {};
+    this._options = options || {};
+    this._macros = macros;
+    this._params = [];
+    this._functions = {};
+    this._head = {};
+    source = this._sequence.reduce(function (s, step) {
+      return step.call(_this, s);
+    }, source);
+    return new Result(source, this._params, this._instructions);
+  };
 
+  FunctionCompiler.prototype._uncomment = function (script) {
+    return new Stripper().strip(script);
+  };
 
-      /**
-       * Compile EDBML source to function.
-       * @param {string} source
-       * @param {Map<string,string} options
-       * @param {???} macros
-       * @param {Map<string,string} directives
-       * @returns {Result}
-       */
-      value: function (source, options, macros, directives) {
-        var _this = this;
-        this._directives = directives || {};
-        this._options = options || {};
-        this._macros = macros;
-        this._params = [];
-        this._functions = {};
-        this._head = {};
-        source = this._sequence.reduce(function (s, step) {
-          return step.call(_this, s);
-        }, source);
-        return new Result(source, this._params, this._instructions);
-      }
-    },
-    _uncomment: {
-      writable: true,
-
-
-
-      // Private ...................................................................
-
-      /**
-       * Strip HTML and JS comments.
-       * @param {string} script
-       * @returns {string}
-       */
-      value: function (script) {
-        return new Stripper().strip(script);
-      }
-    },
-    _validate: {
-      writable: true,
-
-
-      /**
-       * Confirm no nested EDBML scripts.
-       * @see http://stackoverflow.com/a/6322601
-       * @param {string} script
-       * @returns {string}
-       */
-      value: function (script) {
-        if (FunctionCompiler._NESTEXP.test(script)) {
-          throw "Nested EDBML dysfunction";
-        }
-        return script;
-      }
-    },
-    _direct: {
-      writable: true,
-
-
-      /**
-       * Handle directives. Nothing by default.
-       * @param  {string} script
-       * @returns {string}
-       */
-      value: function (script) {
-        return script;
-      }
-    },
-    _extract: {
-      writable: true,
-
-
-      /**
-       * Extract and evaluate processing instructions.
-       * @param {string} script
-       * @returns {string}
-       */
-      value: function (script) {
-        var _this2 = this;
-        Instruction.from(script).forEach(function (pi) {
-          _this2._instructions = _this2._instructions || [];
-          _this2._instructions.push(pi);
-          _this2._instruct(pi);
-        });
-        return Instruction.clean(script);
-      }
-    },
-    _instruct: {
-      writable: true,
-
-
-      /**
-       * Evaluate processing instruction.
-       * @param {Instruction} pi
-       */
-      value: function (pi) {
-        var att = pi.att;
-        switch (pi.tag) {
-          case "param":
-            this._params.push(att.name);
-            break;
-          case "function":
-            this._functions[att.name] = att.src;
-            break;
-        }
-      }
-    },
-    _definehead: {
-      writable: true,
-
-
-      /**
-       * Define stuff in head. Using var name underscore hack
-       * to bypass the macro hygiene, will be normalized later. 
-       * TODO: In string checks, also check for starting '('
-       * @param {string} script
-       * @param {object} head
-       * @returns {string}
-       */
-      value: function (script) {
-        var head = this._head;
-        var params = this._params;
-        var functions = this._functions;
-        if (params.indexOf("out") < 0) {
-          head.out = "$edbml.$out__MACROFIX";
-        }
-        if (script.contains("@")) {
-          // TODO: run macros FIRST at look for '$att' ???
-          head.$att__MACROFIX = "$edbml.$att__MACROFIX";
-        }
-        if (script.contains("$set")) {
-          head.$set = "edbml.$set";
-        }
-        if (script.contains("$txt")) {
-          head.$txt = "edbml.safetext";
-        }
-        if (script.contains("$val")) {
-          head.$val = "edbml.safeattr";
-        }
-        each(functions, function (name, src) {
-          head[name] = src + ".lock(out)";
-        });
-        return script;
-      }
-    },
-    _injecthead: {
-      writable: true,
-
-
-      /**
-       * Inject stuff in head. Let's just hope that V8 keeps on iterating 
-       * object keys in chronological order (in which they were defined).
-       * @param {string} script
-       * @param {object} head
-       * @returns {string}
-       */
-      value: function (script, head) {
-        return "'use strict';\n" + "var " + each(this._head, function (name, value) {
-          return name + (value !== undefined ? " = " + value : "");
-        }).join(",") + ";" + script;
-      }
-    },
-    _macromize: {
-      writable: true,
-
-
-      /**
-       * Release the macros. Normalize variable names that were
-       * hacked  to bypass the internal macro hygiene routine.
-       * @param {string} script
-       * @returns {string}
-       */
-      value: function (script) {
-        script = this._macros ? this._macros.compile(script) : script;
-        return script.replace(/__MACROFIX/g, "");
-      }
-    },
-    _source: {
-      writable: true,
-
-
-      /**
-       * Compute full script source (including arguments) for debugging stuff.
-       * @returns {string}
-       */
-      value: function (source, params) {
-        var lines = source.split("\n");
-        lines.pop(); // empty line :/
-        var args = params.length ? "( " + params.join(", ") + " )" : "()";
-        return "function " + args + " {\n" + lines.join("\n") + "\n}";
-      }
+  FunctionCompiler.prototype._validate = function (script) {
+    if (FunctionCompiler._NESTEXP.test(script)) {
+      throw "Nested EDBML dysfunction";
     }
-  });
+    return script;
+  };
+
+  FunctionCompiler.prototype._direct = function (script) {
+    return script;
+  };
+
+  FunctionCompiler.prototype._extract = function (script) {
+    var _this2 = this;
+    Instruction.from(script).forEach(function (pi) {
+      _this2._instructions = _this2._instructions || [];
+      _this2._instructions.push(pi);
+      _this2._instruct(pi);
+    });
+    return Instruction.clean(script);
+  };
+
+  FunctionCompiler.prototype._instruct = function (pi) {
+    var att = pi.att;
+    switch (pi.tag) {
+      case "param":
+        this._params.push(att.name);
+        break;
+      case "function":
+        this._functions[att.name] = att.src;
+        break;
+    }
+  };
+
+  FunctionCompiler.prototype._definehead = function (script) {
+    var head = this._head;
+    var params = this._params;
+    var functions = this._functions;
+    if (params.indexOf("out") < 0) {
+      head.out = "$edbml.$out__MACROFIX";
+    }
+    if (script.contains("@")) {
+      // TODO: run macros FIRST at look for '$att' ???
+      head.$att__MACROFIX = "$edbml.$att__MACROFIX";
+    }
+    if (script.contains("$set")) {
+      head.$set = "edbml.$set";
+    }
+    if (script.contains("$txt")) {
+      head.$txt = "edbml.safetext";
+    }
+    if (script.contains("$val")) {
+      head.$val = "edbml.safeattr";
+    }
+    each(functions, function (name, src) {
+      head[name] = src + ".lock(out)";
+    });
+    return script;
+  };
+
+  FunctionCompiler.prototype._injecthead = function (script, head) {
+    return "'use strict';\n" + "var " + each(this._head, function (name, value) {
+      return name + (value !== undefined ? " = " + value : "");
+    }).join(",") + ";" + script;
+  };
+
+  FunctionCompiler.prototype._macromize = function (script) {
+    script = this._macros ? this._macros.compile(script) : script;
+    return script.replace(/__MACROFIX/g, "");
+  };
+
+  FunctionCompiler.prototype._source = function (source, params) {
+    var lines = source.split("\n");
+    lines.pop(); // empty line :/
+    var args = params.length ? "( " + params.join(", ") + " )" : "()";
+    return "function " + args + " {\n" + lines.join("\n") + "\n}";
+  };
 
   return FunctionCompiler;
 })(Compiler);
@@ -755,6 +515,10 @@ FunctionCompiler._NESTEXP = /<script.*type=["']?text\/edbml["']?.*>([\s\S]+?)/g;
 
 
 
+/**
+ * Script compiler.
+ * @extends {FunctionCompiler}
+ */
 var ScriptCompiler = (function (FunctionCompiler) {
   var ScriptCompiler =
 
@@ -770,49 +534,24 @@ var ScriptCompiler = (function (FunctionCompiler) {
 
   _extends(ScriptCompiler, FunctionCompiler);
 
-  _classProps(ScriptCompiler, null, {
-    _instruct: {
-      writable: true,
-
-
-
-      // Private ...................................................................
-
-      /**
-       * Handle instruction.
-       * @overrides {FunctionCompiler._instruct}
-       * @param {Instruction} pi
-       */
-      value: function (pi) {
-        FunctionCompiler.prototype._instruct.call(this, pi);
-        var atts = pi.att;
-        switch (pi.tag) {
-          case "input":
-            this.inputs[atts.name] = atts.type;
-            break;
-        }
-      }
-    },
-    _definehead: {
-      writable: true,
-
-
-      /**
-       * Define stuff in head.
-       * @param {string} script
-       * @param {object} head
-       * @returns {string}
-       */
-      value: function (script) {
-        var _this3 = this;
-        script = FunctionCompiler.prototype._definehead.call(this, script);
-        each(this.inputs, function (name, type) {
-          _this3._head[name] = "$edbml.$input(" + type + ")";
-        }, this);
-        return script;
-      }
+  ScriptCompiler.prototype._instruct = function (pi) {
+    FunctionCompiler.prototype._instruct.call(this, pi);
+    var atts = pi.att;
+    switch (pi.tag) {
+      case "input":
+        this.inputs[atts.name] = atts.type;
+        break;
     }
-  });
+  };
+
+  ScriptCompiler.prototype._definehead = function (script) {
+    var _this3 = this;
+    script = FunctionCompiler.prototype._definehead.call(this, script);
+    each(this.inputs, function (name, type) {
+      _this3._head[name] = "$edbml.$input(" + type + ")";
+    }, this);
+    return script;
+  };
 
   return ScriptCompiler;
 })(FunctionCompiler);
@@ -821,6 +560,11 @@ var ScriptCompiler = (function (FunctionCompiler) {
 
 
 
+/**
+ * EDB processing instruction.
+ * TODO: Problem with one-letter variable names in <?input name="a" type="TestData"?>
+ * @param {string} pi
+ */
 var Instruction =
 
 /**
@@ -877,110 +621,77 @@ Instruction._ATEXP = /(\S+)=["']?((?:.(?!["']?\s+(?:\S+)=|[>"']))+.)["']?/g;
 
 
 
+/**
+ * Strip out comments in the crudest possible way.
+ */
 var Stripper = (function () {
   var Stripper = function Stripper() {};
 
-  _classProps(Stripper, null, {
-    strip: {
-      writable: true,
+  Stripper.prototype.strip = function (script) {
+    script = this._stripout(script, "<!--", "-->");
+    script = this._stripout(script, "/*", "*/");
+    script = this._stripout(script, "^//", "\n");
+    return script;
+  };
 
-
-      /**
-       * Strip HTML and JS comments.
-       * @param {string} script
-       * @returns {string}
-       */
-      value: function (script) {
-        script = this._stripout(script, "<!--", "-->");
-        script = this._stripout(script, "/*", "*/");
-        script = this._stripout(script, "^//", "\n");
-        return script;
-      }
-    },
-    _stripout: {
-      writable: true,
-
-
-
-      // Private ...................................................................
-
-      /**
-       * Screening the stripper.
-       * @param {string} s1
-       * @param {string} s2
-       * @returns {string}
-       */
-      value: function (script, s1, s2) {
-        var first = s1[0] === "^";
-        s1 = first ? s1.substring(1) : s1;
-        if (script.contains(s1) && script.contains(s2)) {
-          script = this._stripall(script, s1, s2, first);
-        }
-        return script;
-      }
-    },
-    _stripall: {
-      writable: true,
-
-
-      /**
-       * Strip all comments with no concern about the context they appear in...
-       * @param {string} s1
-       * @param {string} s2
-       * @param {boolean} first
-       * @returns {string}
-       */
-      value: function (script, s1, s2, first) {
-        var WHITESPACE = /\s/;
-        var a1 = s1.split(""), a2 = s2.split(""), c1 = a1.shift(), c2 = a2.pop();
-        s1 = a1.join("");
-        s2 = a2.join("");
-        var chars = null, pass = false, next = false, fits = function (i, l, s) {
-          return chars.slice(i, l).join("") === s;
-        }, ahead = function (i, s) {
-          var l = s.length;
-          return fits(i, i + l, s);
-        }, prevs = function (i, s) {
-          var l = s.length;
-          return fits(i - l, i, s);
-        }, begins = function (c, i) {
-          var does = true;
-          while (i > 0 && (c = script[--i]) !== "\n") {
-            if (!c.match(WHITESPACE)) {
-              does = false;
-              break;
-            }
-          }
-          return does;
-        }, start = function (c, i) {
-          var does = c === c1 && ahead(i + 1, s1);
-          return does && first ? begins(c, i) : does;
-        }, stops = function (c, i) {
-          return c === c2 && prevs(i, s2);
-        };
-        chars = script.split("");
-        return chars.map(function (chaa, i) {
-          if (pass) {
-            if (stops(chaa, i)) {
-              next = true;
-            }
-          } else {
-            if (start(chaa, i)) {
-              pass = true;
-            }
-          }
-          if (pass || next) {
-            chaa = "";
-          }
-          if (next) {
-            pass = false;
-            next = false;
-          }
-          return chaa;
-        }).join("");
-      }
+  Stripper.prototype._stripout = function (script, s1, s2) {
+    var first = s1[0] === "^";
+    s1 = first ? s1.substring(1) : s1;
+    if (script.contains(s1) && script.contains(s2)) {
+      script = this._stripall(script, s1, s2, first);
     }
-  });
+    return script;
+  };
+
+  Stripper.prototype._stripall = function (script, s1, s2, first) {
+    var WHITESPACE = /\s/;
+    var a1 = s1.split(""), a2 = s2.split(""), c1 = a1.shift(), c2 = a2.pop();
+    s1 = a1.join("");
+    s2 = a2.join("");
+    var chars = null, pass = false, next = false, fits = function (i, l, s) {
+      return chars.slice(i, l).join("") === s;
+    }, ahead = function (i, s) {
+      var l = s.length;
+      return fits(i, i + l, s);
+    }, prevs = function (i, s) {
+      var l = s.length;
+      return fits(i - l, i, s);
+    }, begins = function (c, i) {
+      var does = true;
+      while (i > 0 && (c = script[--i]) !== "\n") {
+        if (!c.match(WHITESPACE)) {
+          does = false;
+          break;
+        }
+      }
+      return does;
+    }, start = function (c, i) {
+      var does = c === c1 && ahead(i + 1, s1);
+      return does && first ? begins(c, i) : does;
+    }, stops = function (c, i) {
+      return c === c2 && prevs(i, s2);
+    };
+    chars = script.split("");
+    return chars.map(function (chaa, i) {
+      if (pass) {
+        if (stops(chaa, i)) {
+          next = true;
+        }
+      } else {
+        if (start(chaa, i)) {
+          pass = true;
+        }
+      }
+      if (pass || next) {
+        chaa = "";
+      }
+      if (next) {
+        pass = false;
+        next = false;
+      }
+      return chaa;
+    }).join("");
+  };
 
   return Stripper;
 })();
@@ -989,6 +700,10 @@ var Stripper = (function () {
 
 
 
+/**
+ * Script runner. Iterating strings one character at a time
+ * while using advanced algorithms to look ahead and behind.
+ */
 var Runner = (function () {
   var Runner =
 
@@ -1004,155 +719,63 @@ var Runner = (function () {
     this._index = -1;
   };
 
-  _classProps(Runner, null, {
-    run: {
-      writable: true,
+  Runner.prototype.run = function (compiler, script, status, markup, output) {
+    this._runlines(compiler, script.split("\n"), status, markup, output);
+    // markup.debug(); // uncomment to debug Markup.js
+  };
 
+  Runner.prototype.ahead = function (string) {
+    var line = this._line;
+    var index = this._index;
+    var i = index + 1;
+    var l = string.length;
+    return line.length > index + l && line.substring(i, i + l) === string;
+  };
 
-      /**
-       * Run script.
-       * @param {Compiler} compiler
-       * @param {string} script
-       * @param {Status} status
-       * @param {Markup} markup
-       * @param {Output} output
-       */
-      value: function (compiler, script, status, markup, output) {
-        this._runlines(compiler, script.split("\n"), status, markup, output);
-        // markup.debug(); // uncomment to debug Markup.js
-      }
-    },
-    ahead: {
-      writable: true,
+  Runner.prototype.behind = function (string) {
+    var line = this._line;
+    var index = this._index;
+    var length = string.length, start = index - length;
+    return start >= 0 && line.substr(start, length) === string;
+  };
 
+  Runner.prototype.lineahead = function () {
+    return this._line.substring(this._index + 1);
+  };
 
-      /**
-       * Line text ahead equals given string?
-       * @param {string} string
-       * @returns {boolean}
-       */
-      value: function (string) {
-        var line = this._line;
-        var index = this._index;
-        var i = index + 1;
-        var l = string.length;
-        return line.length > index + l && line.substring(i, i + l) === string;
-      }
-    },
-    behind: {
-      writable: true,
+  Runner.prototype.skipahead = function (string) {
+    console.error("TODO");
+  };
 
+  Runner.prototype._runlines = function (compiler, lines, status, markup, output) {
+    var _this4 = this;
+    var stop = lines.length - 1;
+    lines.forEach(function (line, index) {
+      _this4.firstline = index === 0;
+      _this4.lastline = index === stop;
+      _this4._runline(line, index, compiler, status, markup, output);
+    });
+  };
 
-      /**
-       * Line text behind equals given string?
-       * @param {string} line
-       * @param {number} index
-       * @param {string} string
-       * @returns {boolean}
-       */
-      value: function (string) {
-        var line = this._line;
-        var index = this._index;
-        var length = string.length, start = index - length;
-        return start >= 0 && line.substr(start, length) === string;
-      }
-    },
-    lineahead: {
-      writable: true,
-
-
-      /**
-       * Get line string from current position.
-       * @returns {string}
-       */
-      value: function () {
-        return this._line.substring(this._index + 1);
-      }
-    },
-    skipahead: {
-      writable: true,
-
-
-      /**
-       * Space-stripped line text at index equals string?
-       * @param {string} string
-       * @returns {boolean}
-       */
-      value: function (string) {
-        console.error("TODO");
-      }
-    },
-    _runlines: {
-      writable: true,
-
-
-
-      // Private ...................................................................
-
-      /**
-       * Run all lines.
-       * @param {Compiler} compiler
-       * @param {Array<String>} lines
-       * @param {Status} status
-       * @param {Markup} markup
-       * @param {Output} output
-       */
-      value: function (compiler, lines, status, markup, output) {
-        var _this4 = this;
-        var stop = lines.length - 1;
-        lines.forEach(function (line, index) {
-          _this4.firstline = index === 0;
-          _this4.lastline = index === stop;
-          _this4._runline(line, index, compiler, status, markup, output);
-        });
-      }
-    },
-    _runline: {
-      writable: true,
-
-
-      /**
-       * Run single line.
-       * @param {string} line
-       * @param {number} index
-       * @param {Compiler} compiler
-       * @param {Status} status
-       * @param {Markup} markup
-       * @param {Output} output
-       */
-      value: function (line, index, compiler, status, markup, output) {
-        line = this._line = line.trim();
-        if (line.length) {
-          compiler.newline(line, this, status, markup, output);
-          this._runchars(compiler, line.split(""), status, markup, output);
-          compiler.endline(line, this, status, markup, output);
-        }
-      }
-    },
-    _runchars: {
-      writable: true,
-
-
-      /**
-       * Run all chars.
-       * @param {Compiler} compiler
-       * @param {Array<String>} chars
-       * @param {Status} status
-       * @param {Markup} markup
-       * @param {Output} output
-       */
-      value: function (compiler, chars, status, markup, output) {
-        var _this5 = this;
-        var stop = chars.length - 1;
-        chars.forEach(function (c, i) {
-          _this5._index = i;
-          _this5.firstchar = i === 0;
-          _this5.lastchar = i === stop;
-          compiler.nextchar(c, _this5, status, markup, output);
-        });
-      }
+  Runner.prototype._runline = function (line, index, compiler, status, markup, output) {
+    line = this._line = line.trim();
+    if (line.length) {
+      compiler.newline(line, this, status, markup, output);
+      this._runchars(compiler, line.split(""), status, markup, output);
+      compiler.endline(line, this, status, markup, output);
     }
-  });
+  };
+
+  Runner.prototype._runchars = function (compiler, chars, status, markup, output) {
+    var _this5 = this;
+    var stop = chars.length - 1;
+    chars.forEach(function (c, i) {
+      _this5._index = i;
+      _this5.firstchar = i === 0;
+      _this5.lastchar = i === stop;
+      compiler.nextchar(c, _this5, status, markup, output);
+    });
+  };
 
   return Runner;
 })();
@@ -1161,6 +784,9 @@ var Runner = (function () {
 
 
 
+/**
+ * Collapsing everything into a single function declaration.
+ */
 var Result = (function () {
   var Result =
 
@@ -1175,80 +801,48 @@ var Result = (function () {
     this.errormessage = null;
   };
 
-  _classProps(Result, null, {
-    _tofunctionstring: {
-      writable: true,
-
-
-      /**
-       * Compute single function declaration.
-       * @param {string} script
-       * @param @optional (Array<String>} params
-       * @returns {string}
-       */
-      value: function (body, params) {
-        if (params === undefined) params = [];
-        var js;
-        try {
-          js = "'use strict'\n;" + body;
-          js = new Function(params.join(","), body).toString();
-          js = js.replace(/^function anonymous/, "function $edbml");
-          js = js.replace(/\&quot;\&apos;/g, "&quot;");
-          return js;
-        } catch (exception) {
-          this.instructionset = null;
-          this.errormessage = exception.message;
-          return this._tofallbackstring(body, params, exception.message);
-        }
-      }
-    },
-    _tofallbackstring: {
-      writable: true,
-
-
-      /**
-       * Fallback for invalid source.
-       * @param {string} script
-       * @param (Array<String>} params
-       * @returns {string}
-       */
-      value: function (body, params, exception) {
-        body = this._emergencyformat(body, params);
-        body = new Buffer(body).toString("base64");
-        body = "gui.BlobLoader.loadScript ( document, atob (  '" + body + "' ));\n";
-        body += "return '<p class=\"edberror\">" + exception + "</p>'";
-        return this._tofunctionstring(body);
-      }
-    },
-    _emergencyformat: {
-      writable: true,
-
-
-      /**
-       * Format invalid source for readability.
-       * @param {string} body
-       * @returns {string}
-       */
-      value: function (body, params) {
-        var result = "", tabs = "\t", init = null, last = null, fixt = null, hack = null;
-        body.split("\n").forEach(function (line) {
-          line = line.trim();
-          init = line[0];
-          last = line[line.length - 1];
-          fixt = line.split("//")[0].trim();
-          hack = fixt[fixt.length - 1];
-          if ((init === "}" || init === "]") && tabs !== "") {
-            tabs = tabs.slice(0, -1);
-          }
-          result += tabs + line + "\n";
-          if (last === "{" || last === "[" || hack === "{" || hack === "[") {
-            tabs += "\t";
-          }
-        });
-        return ["function dysfunction (" + params + ") {", result, "}"].join("\n");
-      }
+  Result.prototype._tofunctionstring = function (body, params) {
+    if (params === undefined) params = [];
+    var js;
+    try {
+      js = "'use strict'\n;" + body;
+      js = new Function(params.join(","), body).toString();
+      js = js.replace(/^function anonymous/, "function $edbml");
+      js = js.replace(/\&quot;\&apos;/g, "&quot;");
+      return js;
+    } catch (exception) {
+      this.instructionset = null;
+      this.errormessage = exception.message;
+      return this._tofallbackstring(body, params, exception.message);
     }
-  });
+  };
+
+  Result.prototype._tofallbackstring = function (body, params, exception) {
+    body = this._emergencyformat(body, params);
+    body = new Buffer(body).toString("base64");
+    body = "gui.BlobLoader.loadScript ( document, atob (  '" + body + "' ));\n";
+    body += "return '<p class=\"edberror\">" + exception + "</p>'";
+    return this._tofunctionstring(body);
+  };
+
+  Result.prototype._emergencyformat = function (body, params) {
+    var result = "", tabs = "\t", init = null, last = null, fixt = null, hack = null;
+    body.split("\n").forEach(function (line) {
+      line = line.trim();
+      init = line[0];
+      last = line[line.length - 1];
+      fixt = line.split("//")[0].trim();
+      hack = fixt[fixt.length - 1];
+      if ((init === "}" || init === "]") && tabs !== "") {
+        tabs = tabs.slice(0, -1);
+      }
+      result += tabs + line + "\n";
+      if (last === "{" || last === "[" || hack === "{" || hack === "[") {
+        tabs += "\t";
+      }
+    });
+    return ["function dysfunction (" + params + ") {", result, "}"].join("\n");
+  };
 
   return Result;
 })();
@@ -1257,6 +851,9 @@ var Result = (function () {
 
 
 
+/**
+ * Tracking compiler state while compiling.
+ */
 var Status = (function () {
   var Status = function Status() {
     this.mode = Status.MODE_JS;
@@ -1274,77 +871,29 @@ var Status = (function () {
     this.indx = 0;
   };
 
-  _classProps(Status, null, {
-    gojs: {
-      writable: true,
+  Status.prototype.gojs = function () {
+    this.mode = Status.MODE_JS;
+  };
 
+  Status.prototype.gohtml = function () {
+    this.mode = Status.MODE_HTML;
+  };
 
-      /**
-       * Go JS mode.
-       */
-      value: function () {
-        this.mode = Status.MODE_JS;
-      }
-    },
-    gohtml: {
-      writable: true,
+  Status.prototype.gotag = function () {
+    this.mode = Status.MODE_TAG;
+  };
 
+  Status.prototype.isjs = function () {
+    return this.mode === Status.MODE_JS;
+  };
 
-      /**
-       * Go HTML mode.
-       */
-      value: function () {
-        this.mode = Status.MODE_HTML;
-      }
-    },
-    gotag: {
-      writable: true,
+  Status.prototype.ishtml = function () {
+    return this.mode === Status.MODE_HTML;
+  };
 
-
-      /**
-       * Go tag mode.
-       */
-      value: function () {
-        this.mode = Status.MODE_TAG;
-      }
-    },
-    isjs: {
-      writable: true,
-
-
-      /**
-       * Is JS mode?
-       * @returns {boolean}
-       */
-      value: function () {
-        return this.mode === Status.MODE_JS;
-      }
-    },
-    ishtml: {
-      writable: true,
-
-
-      /**
-       * Is HTML mode?
-       * @returns {boolean}
-       */
-      value: function () {
-        return this.mode === Status.MODE_HTML;
-      }
-    },
-    istag: {
-      writable: true,
-
-
-      /**
-       * Is tag mode?
-       * @returns {boolean}
-       */
-      value: function () {
-        return this.mode === Status.MODE_TAG;
-      }
-    }
-  });
+  Status.prototype.istag = function () {
+    return this.mode === Status.MODE_TAG;
+  };
 
   return Status;
 })();
@@ -1360,6 +909,10 @@ Status.MODE_TAG = "tag";
 
 
 
+/**
+ * Tracking the state of 
+ * markup while compiling.
+ */
 var Markup = (function () {
   var Markup = function Markup() {
     this.tag = null; // current tagname (if applicable)
@@ -1373,251 +926,163 @@ var Markup = (function () {
     this._go("txt");
   };
 
-  _classProps(Markup, null, {
-    next: {
-      writable: true,
-      value: function (c) {
-        this._index++;
-        switch (c) {
-          case "<":
-          case ">":
-            this._ontag(c);
-            break;
-          case " ":
-            this._onspace(c);
-            break;
-          case "=":
-            this._onequal(c);
-            break;
-          case "\"":
-          case "'":
-            this._onquote(c);
-            break;
-          default:
-            this._buf(c);
-            break;
-        }
-        this._prevchar = c;
-        return this._is;
+  Markup.prototype.next = function (c) {
+    this._index++;
+    switch (c) {
+      case "<":
+      case ">":
+        this._ontag(c);
+        break;
+      case " ":
+        this._onspace(c);
+        break;
+      case "=":
+        this._onequal(c);
+        break;
+      case "\"":
+      case "'":
+        this._onquote(c);
+        break;
+      default:
+        this._buf(c);
+        break;
+    }
+    this._prevchar = c;
+    return this._is;
+  };
+
+  Markup.prototype.debug = function () {
+    this._debug(this._snapshots);
+  };
+
+  Markup.prototype._ontag = function (c) {
+    if (c === "<") {
+      if (this._is === "txt") {
+        this.tag = null;
+        this._go("tag");
       }
-    },
-    debug: {
-      writable: true,
-
-
-      /**
-       * Log snapshots to console (for debugging purpose). 
-       * You can call this method over in class Runner.js 
-       */
-      value: function () {
-        this._debug(this._snapshots);
+    } else {
+      if (this._is === "tag") {
+        this.tag = this._buffer.trim();
       }
-    },
-    _ontag: {
-      writable: true,
-
-
-
-
-      // Private ...................................................................
-
-      /**
-       * Tag chars.
-       * @param {string} c
-       */
-      value: function (c) {
-        if (c === "<") {
-          if (this._is === "txt") {
-            this.tag = null;
-            this._go("tag");
-          }
-        } else {
-          if (this._is === "tag") {
-            this.tag = this._buffer.trim();
-          }
-          switch (this._is) {
-            case "att":
-            case "tag":
-              this.tag = null;
-              this._go("txt");
-              break;
-          }
-        }
-      }
-    },
-    _onquote: {
-      writable: true,
-
-
-      /**
-       * Quote chars. We may assume the author to use double 
-       * quotes, single quotes and no quotes for attributes.
-       * @param {string} c
-       */
-      value: function (c) {
-        var previndex = this._index - 1;
-        switch (this._is) {
-          case "val":
-            if (this._quotes) {
-              if (this._quotes === c && this._prevchar !== "\\") {
-                this._go("att");
-              }
-            } else if (this._was(previndex, "att")) {
-              this._quotes = c;
-            }
-            break;
-          default:
-            this._buf(c);
-            break;
-        }
-      }
-    },
-    _onspace: {
-      writable: true,
-
-
-      /**
-       * Space chars.
-       * TODO: Important: All sorts of (multiple) whitespace characters going on!
-       * @param {string} c
-       */
-      value: function (c) {
-        switch (this._is) {
-          case "tag":
-            this.tag = this._buffer.trim();
-            this._go("att");
-            break;
-          case "val":
-            if (!this._quotes) {
-              this._go("att");
-            }
-            break;
-          default:
-            this._buf(c);
-            break;
-        }
-      }
-    },
-    _onequal: {
-      writable: true,
-
-
-      /**
-       * Equal sign.
-       * @param {string} c
-       */
-      value: function (c) {
-        if (this._is === "att") {
-          this._go("val");
-        } else {
-          this._buf(c);
-        }
-      }
-    },
-    _buf: {
-      writable: true,
-
-
-      /**
-       * Buffer char.
-       * @param {string} c
-       */
-      value: function (c) {
-        this._buffer += c;
-      }
-    },
-    _go: {
-      writable: true,
-
-
-      /**
-       * Take snapshot, clear the buffer and change to new mode.
-       * @param {string} newis
-       */
-      value: function (newis) {
-        if (this._is !== null) {
-          this._snapshots.push([this._index, this._is, this._buffer]);
-        }
-        this._quotes = null;
-        this._buffer = "";
-        this._is = newis;
-      }
-    },
-    _was: {
-      writable: true,
-
-
-      /**
-       * Was type at index?
-       * @param {number} index
-       * @param {string} type
-       */
-      value: function (index, type) {
-        var ix, it, match, snap, prev, snaps = this._snapshots;
-        if (snaps.length) {
-          it = snaps.length - 1;
-          while (!match && (snap = snaps[it--])) {
-            if ((ix = snap[0]) === index) {
-              match = snap;
-            } else if (ix < index) {
-              match = prev;
-            }
-            prev = snap;
-          }
-          return match && match[1] === type;
-        }
-        return false;
-      }
-    },
-    _debug: {
-      writable: true,
-
-
-
-      // Deboogie ..................................................................
-
-      /**
-       * Quick and dirty debugging: The string 
-       * in the console should look like HTML.
-       * @param {Array<Array<string>>} snapshots
-       */
-      value: function (snapshots) {
-        var index, is, was, buffer, yyy, next, end, tab = "\t", tabs = [];
-        console.log(snapshots.reduce(function (html, snap) {
-          index = snap[0];
-          is = snap[1];
-          buffer = snap[2];
-          switch (is) {
-            case "tag":
-              if ((end = buffer[0] === "/")) {
-                tabs.pop();
-              }
-              was = was === "txt" && yyy.trim().length ? "" : was;
-              next = (was ? "\n" + tabs.join("") : "") + "<" + buffer;
-              if (!end) {
-                tabs.push(tab);
-              }
-              break;
-            case "att":
-              next = " " + buffer.trim();
-              if (next === " ") {
-                next = "";
-              }
-              break;
-            case "val":
-              next = "=\"" + buffer + "\"";
-              break;
-            case "txt":
-              next = (was ? ">" : "") + buffer;
-              break;
-          }
-          was = is;
-          yyy = buffer;
-          return html + next;
-        }, "") + (was === "tag" ? ">" : ""));
+      switch (this._is) {
+        case "att":
+        case "tag":
+          this.tag = null;
+          this._go("txt");
+          break;
       }
     }
-  });
+  };
+
+  Markup.prototype._onquote = function (c) {
+    var previndex = this._index - 1;
+    switch (this._is) {
+      case "val":
+        if (this._quotes) {
+          if (this._quotes === c && this._prevchar !== "\\") {
+            this._go("att");
+          }
+        } else if (this._was(previndex, "att")) {
+          this._quotes = c;
+        }
+        break;
+      default:
+        this._buf(c);
+        break;
+    }
+  };
+
+  Markup.prototype._onspace = function (c) {
+    switch (this._is) {
+      case "tag":
+        this.tag = this._buffer.trim();
+        this._go("att");
+        break;
+      case "val":
+        if (!this._quotes) {
+          this._go("att");
+        }
+        break;
+      default:
+        this._buf(c);
+        break;
+    }
+  };
+
+  Markup.prototype._onequal = function (c) {
+    if (this._is === "att") {
+      this._go("val");
+    } else {
+      this._buf(c);
+    }
+  };
+
+  Markup.prototype._buf = function (c) {
+    this._buffer += c;
+  };
+
+  Markup.prototype._go = function (newis) {
+    if (this._is !== null) {
+      this._snapshots.push([this._index, this._is, this._buffer]);
+    }
+    this._quotes = null;
+    this._buffer = "";
+    this._is = newis;
+  };
+
+  Markup.prototype._was = function (index, type) {
+    var ix, it, match, snap, prev, snaps = this._snapshots;
+    if (snaps.length) {
+      it = snaps.length - 1;
+      while (!match && (snap = snaps[it--])) {
+        if ((ix = snap[0]) === index) {
+          match = snap;
+        } else if (ix < index) {
+          match = prev;
+        }
+        prev = snap;
+      }
+      return match && match[1] === type;
+    }
+    return false;
+  };
+
+  Markup.prototype._debug = function (snapshots) {
+    var index, is, was, buffer, yyy, next, end, tab = "\t", tabs = [];
+    console.log(snapshots.reduce(function (html, snap) {
+      index = snap[0];
+      is = snap[1];
+      buffer = snap[2];
+      switch (is) {
+        case "tag":
+          if ((end = buffer[0] === "/")) {
+            tabs.pop();
+          }
+          was = was === "txt" && yyy.trim().length ? "" : was;
+          next = (was ? "\n" + tabs.join("") : "") + "<" + buffer;
+          if (!end) {
+            tabs.push(tab);
+          }
+          break;
+        case "att":
+          next = " " + buffer.trim();
+          if (next === " ") {
+            next = "";
+          }
+          break;
+        case "val":
+          next = "=\"" + buffer + "\"";
+          break;
+        case "txt":
+          next = (was ? ">" : "") + buffer;
+          break;
+      }
+      was = is;
+      yyy = buffer;
+      return html + next;
+    }, "") + (was === "tag" ? ">" : ""));
+  };
 
   return Markup;
 })();
@@ -1633,6 +1098,9 @@ Markup.CONTEXT_VAL = "val";
 
 
 
+/**
+ * Collecting JS code.
+ */
 var Output =
 
 /**
