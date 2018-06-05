@@ -274,7 +274,7 @@ class Compiler {
 		var arg = tag.match(/input|textarea/) ? 'value, checked' : '';
 		this._injectcombo(status, markup, output, {
 			outline: "var $name = $set(function(" + arg + ") {\n$temp;\n}, this);",
-			inline: "edbml.$run(event, \\'\' + $name + \'\\');"
+			inline: "edbml.$run(this, \\'\' + $name + \'\\');"
 		});
 	}
 
