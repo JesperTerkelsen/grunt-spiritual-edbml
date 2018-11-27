@@ -8,12 +8,10 @@ var sweet = require('sweet.js');
  * @param {Map<string,string>} options
  */
 exports.init = function(grunt, options) {
-
 	// TODO: load from options
 	sweet.loadMacro(__dirname + '/macros/@.sjs');
 
 	return {
-
 		/*
 		 * Release the macros.
 		 * @param {string} string

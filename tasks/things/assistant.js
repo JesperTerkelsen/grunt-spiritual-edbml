@@ -1,6 +1,6 @@
-"use strict";
+'use strict';
 
-var shorthash = require("./shorthash");
+var shorthash = require('./shorthash');
 
 /**
  * Genereate hash for file name.
@@ -8,7 +8,7 @@ var shorthash = require("./shorthash");
  * @returns {string}
  */
 exports.unique = function(filepath, index) {
-	return "$" + shorthash.unique(filepath) + index;
+	return '$' + shorthash.unique(filepath) + index;
 };
 
 /**
@@ -38,20 +38,20 @@ exports.declare = function(name, result) {
 	var json;
 	var fun = result.functionstring;
 	var pis = result.instructionset;
-	var output = "edbml.declare(\"" + name + "\").as(" + fun;
+	var output = 'edbml.declare("' + name + '").as(' + fun;
 	if (pis && (pis = filterpis(pis)).length) {
 		json = formatjson(pis);
 		json = JSON.stringify(json);
 		json = json.replace(/"(\w+)"\s*:/g, '$1:');
-		output += ").withInstructions(" + json + ");";
+		output += ').withInstructions(' + json + ');';
 	} else {
-		output += ");";
+		output += ');';
 	}
 	return output;
 };
 
 /**
- * Only relay <?input?> instructions to the client 
+ * Only relay <?input?> instructions to the client
  * since the rest aren't really needed right now.
  * @param {Array<Instruction>} pis
  * @returns {Array<Instruction>}
@@ -63,7 +63,7 @@ function filterpis(pis) {
 }
 
 /**
- * Format processing instructions 
+ * Format processing instructions
  * for slight improved readability.
  * @param {Array<Instruction>} pis
  * @returns {Array<object>}
@@ -87,12 +87,12 @@ function formatjson(pis) {
 function autocast(string) {
 	var result = String(string);
 	switch (result) {
-		case "null":
+		case 'null':
 			result = null;
 			break;
-		case "true":
-		case "false":
-			result = (result === "true");
+		case 'true':
+		case 'false':
+			result = result === 'true';
 			break;
 		default:
 			if (String(parseInt(result, 10)) === result) {
@@ -102,5 +102,5 @@ function autocast(string) {
 			}
 			break;
 	}
-	return result === "" ? true : result;
+	return result === '' ? true : result;
 }

@@ -1,10 +1,9 @@
-"use strict";
+'use strict';
 
 /**
  * Strip out comments in the crudest possible way.
  */
 class Stripper {
-
 	/**
 	 * Strip HTML and JS comments.
 	 * @param {string} script
@@ -17,7 +16,6 @@ class Stripper {
 		return script;
 	}
 
-
 	// Private ...................................................................
 
 	/**
@@ -29,7 +27,7 @@ class Stripper {
 	_stripout(script, s1, s2) {
 		var first = s1[0] === '^';
 		s1 = first ? s1.substring(1) : s1;
-		if(script.contains(s1) && script.contains(s2)) {
+		if (script.contains(s1) && script.contains(s2)) {
 			script = this._stripall(script, s1, s2, first);
 		}
 		return script;
@@ -66,8 +64,8 @@ class Stripper {
 			},
 			begins = (c, i) => {
 				var does = true;
-				while(i > 0 && (c = script[--i]) !== '\n') {
-					if(!c.match(WHITESPACE)) {
+				while (i > 0 && (c = script[--i]) !== '\n') {
+					if (!c.match(WHITESPACE)) {
 						does = false;
 						break;
 					}
@@ -82,25 +80,26 @@ class Stripper {
 				return c === c2 && prevs(i, s2);
 			};
 		chars = script.split('');
-		return chars.map((chaa, i) => {
-			if (pass) {
-				if (stops(chaa, i)) {
-					next = true;
+		return chars
+			.map((chaa, i) => {
+				if (pass) {
+					if (stops(chaa, i)) {
+						next = true;
+					}
+				} else {
+					if (start(chaa, i)) {
+						pass = true;
+					}
 				}
-			} else {
-				if (start(chaa, i)) {
-					pass = true;
+				if (pass || next) {
+					chaa = '';
 				}
-			}
-			if (pass || next) {
-				chaa = '';
-			}
-			if (next) {
-				pass = false;
-				next = false;
-			}
-			return chaa;
-		}).join('');
+				if (next) {
+					pass = false;
+					next = false;
+				}
+				return chaa;
+			})
+			.join('');
 	}
-
 }

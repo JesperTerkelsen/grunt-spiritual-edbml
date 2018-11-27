@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /**
  * Call function for each own key in object (exluding the prototype stuff)
@@ -8,7 +8,7 @@
  * @param @optional {object} thisp
  */
 function each(object, func, thisp) {
-	return Object.keys(object).map((key) => {
+	return Object.keys(object).map(key => {
 		return func.call(thisp, key, object[key]);
 	});
 }
@@ -23,12 +23,12 @@ function each(object, func, thisp) {
 function cast(string) {
 	var result = String(string);
 	switch (result) {
-		case "null":
+		case 'null':
 			result = null;
 			break;
-		case "true":
-		case "false":
-			result = (result === "true");
+		case 'true':
+		case 'false':
+			result = result === 'true';
 			break;
 		default:
 			if (String(parseInt(result, 10)) === result) {
@@ -38,7 +38,7 @@ function cast(string) {
 			}
 			break;
 	}
-	return result === "" ? true : result;
+	return result === '' ? true : result;
 }
 
 /**
@@ -50,7 +50,7 @@ var generateKey = (function() {
 	var keys = {};
 	return function() {
 		var ran = Math.random().toString();
-		var key = "key" + ran.slice(2, 11);
+		var key = 'key' + ran.slice(2, 11);
 		if (keys[key]) {
 			key = generateKey();
 		} else {
@@ -58,7 +58,7 @@ var generateKey = (function() {
 		}
 		return key;
 	};
-}());
+})();
 
 /**
  * What? This is wrong on so many.

@@ -1,10 +1,9 @@
-"use strict";
+'use strict';
 
 /**
  * Tracking compiler state while compiling.
  */
 class Status {
-
 	constructor() {
 		this.mode = Status.MODE_JS;
 		this.conf = [];
@@ -67,9 +66,8 @@ class Status {
 	}
 }
 
-
 // Static ...............................
 
-Status.MODE_JS = "js";
-Status.MODE_HTML = "html";
-Status.MODE_TAG = "tag";
+Status.MODE_JS = 'js';
+Status.MODE_HTML = 'html';
+Status.MODE_TAG = 'tag';

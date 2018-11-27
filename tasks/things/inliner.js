@@ -19,7 +19,9 @@ exports.process = function(grunt, files, options, macros, done) {
 		isExpandedPair = filePair.orig.expand || false;
 		filePair.src.forEach(function(src) {
 			if (detectDestType(grunt, filePair.dest) === 'directory') {
-				dest = (isExpandedPair) ? filePair.dest : unixifyPath(path.join(filePair.dest, src));
+				dest = isExpandedPair
+					? filePair.dest
+					: unixifyPath(path.join(filePair.dest, src));
 			} else {
 				dest = filePair.dest;
 			}
@@ -34,7 +36,6 @@ exports.process = function(grunt, files, options, macros, done) {
 	done();
 };
 
-
 // Private .....................................................................
 
 function detectDestType(grunt, dest) {
@@ -45,9 +46,9 @@ function detectDestType(grunt, dest) {
 	}
 }
 
-
 function unixifyPath(filepath) {
-	if (false) { //process.platform === 'win32'
+	if (false) {
+		//process.platform === 'win32'
 		return filepath.replace(/\\/g, '/');
 	} else {
 		return filepath;
@@ -83,9 +84,7 @@ function resolvescripts(grunt, src, options, macros) {
 			var id = script.attr('id');
 			var key = id || assistant.unique(src, i);
 			var tab = tabbing(script);
-			holders[key] = convertinline(
-				script, options, macros, key, tab, id
-			);
+			holders[key] = convertinline(script, options, macros, key, tab, id);
 		}
 	});
 	if (Object.keys(holders).length) {
@@ -113,16 +112,20 @@ function resolvehtml(html, holders) {
  * @param {Map} options
  */
 function convertinline(script, options, macros, key, tab, id) {
-	var js, directives = assistant.directives(script);
-	var scriptid = id || ('edbml.' + key); // TODO: is this right (with the id)?
+	var js,
+		directives = assistant.directives(script);
+	var scriptid = id || 'edbml.' + key; // TODO: is this right (with the id)?
 	var result = compiler.compile(script.html(), options, macros, directives); // 'edb' + key
 	js = assistant.declare(scriptid, result);
-	js = options.beautify ? formatter.beautify(js, tab, true) : formatter.uglify(js);
+	js = options.beautify
+		? formatter.beautify(js, tab, true)
+		: formatter.uglify(js);
 	script.html(placeholder(key)).removeAttr('type');
-	if (!id) { // TODO: should gui.scriptid always be present? Think about this!
-		script.addClass("gui-script");
+	if (!id) {
+		// TODO: should gui.scriptid always be present? Think about this!
+		script.addClass('gui-script');
 		var att = options.attribute || 'gui';
-		script.attr(att + ".scriptid", scriptid);
+		script.attr(att + '.scriptid', scriptid);
 	}
 	return js;
 }
