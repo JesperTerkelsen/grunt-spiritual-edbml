@@ -1,11 +1,10 @@
-"use strict";
+'use strict';
 
 /**
  * Base compiler.
  * Note to self: Conceptualize peek|poke|geek|passout|lockout
  */
 class Compiler {
-
 	/**
 	 * Let's go.
 	 */
@@ -23,7 +22,7 @@ class Compiler {
 	 */
 	newline(line, runner, status, markup, output) {
 		status.last = line.length - 1;
-		status.adds = line[0] === "+";
+		status.adds = line[0] === '+';
 		status.cont = status.cont || (status.ishtml() && status.adds);
 	}
 
@@ -42,7 +41,7 @@ class Compiler {
 				status.gojs();
 			}
 		} else {
-			output.body += "\n";
+			output.body += '\n';
 		}
 		status.cont = false;
 	}
@@ -78,7 +77,6 @@ class Compiler {
 		}
 	}
 
-
 	// Private ...................................................................
 
 	/**
@@ -92,7 +90,7 @@ class Compiler {
 		var markup = new Markup();
 		var output = new Output();
 		runner.run(this, script, status, markup, output);
-		output.body += (status.ishtml() ? "';" : "") + "\nreturn out.write ();";
+		output.body += (status.ishtml() ? "';" : '') + '\nreturn out.write ();';
 		return output.body;
 	}
 
@@ -106,7 +104,7 @@ class Compiler {
 	 */
 	_compilejs(c, runner, status, markup, output) {
 		switch (c) {
-			case "<":
+			case '<':
 				if (runner.firstchar) {
 					status.gohtml();
 					markup.next(c);
@@ -114,7 +112,7 @@ class Compiler {
 					output.body += "out.html += '";
 				}
 				break;
-			case "@":
+			case '@':
 				// handled by the @ macro
 				break;
 		}
@@ -133,12 +131,12 @@ class Compiler {
 		if (!this._continueshtml(c, runner, status)) {
 			var context = markup.next(c);
 			switch (c) {
-				case "{":
+				case '{':
 					if (special) {
 						status.curl++;
 					}
 					break;
-				case "}":
+				case '}':
 					if (--status.curl === 0) {
 						if (status.peek) {
 							status.peek = false;
@@ -162,36 +160,37 @@ class Compiler {
 						}
 					}
 					break;
-				case "$":
-					if (!special && runner.ahead("{")) {
+				case '$':
+					if (!special && runner.ahead('{')) {
 						status.peek = true;
 						status.skip = 2;
 						status.curl = 0;
-						output.body += "' + " + this._escapefrom(context) + " (";
+						output.body +=
+							"' + " + this._escapefrom(context) + ' (';
 					}
 					break;
-				case "#":
-					if (!special && runner.ahead("{")) {
+				case '#':
+					if (!special && runner.ahead('{')) {
 						status.poke = true;
 						status.skip = 2;
 						status.curl = 0;
-						output.temp = "";
+						output.temp = '';
 					}
 					break;
-				case "?":
-					if (!special && runner.ahead("{")) {
+				case '?':
+					if (!special && runner.ahead('{')) {
 						status.geek = true;
 						status.skip = 2;
 						status.curl = 0;
-						output.temp = "";
+						output.temp = '';
 					}
 					break;
 				case "'":
 					if (!special) {
-						output.body += "\\";
+						output.body += '\\';
 					}
 					break;
-				case "@":
+				case '@':
 					this._htmlatt(runner, status, markup, output);
 					break;
 			}
@@ -207,7 +206,7 @@ class Compiler {
 	 * @returns {boolean}
 	 */
 	_continueshtml(c, runner, status) {
-		if (c === "+") {
+		if (c === '+') {
 			if (runner.firstchar) {
 				status.skip = status.adds ? 1 : 0;
 				return true;
@@ -247,17 +246,20 @@ class Compiler {
 	_htmlatt(runner, status, markup, output) {
 		var attr = Compiler._ATTREXP;
 		var rest, name, dels, what;
-		if (runner.behind("@")) {} else if (runner.behind("#{")) {
-			console.error("todo");
-		} else if (runner.ahead("@")) {
+		if (runner.behind('@')) {
+		} else if (runner.behind('#{')) {
+			console.error('todo');
+		} else if (runner.ahead('@')) {
 			output.body += "' + $att.$all() + '";
 			status.skip = 2;
 		} else {
 			rest = runner.lineahead();
 			name = attr.exec(rest)[0];
-			dels = runner.behind("-");
-			what = dels ? "$att.$pop" : "$att.$";
-			output.body = dels ? output.body.substring(0, output.body.length - 1) : output.body;
+			dels = runner.behind('-');
+			what = dels ? '$att.$pop' : '$att.$';
+			output.body = dels
+				? output.body.substring(0, output.body.length - 1)
+				: output.body;
 			output.body += "' + " + what + " ( '" + name + "' ) + '";
 			status.skip = name.length + 1;
 		}
@@ -273,8 +275,9 @@ class Compiler {
 		var tag = markup.tag || '';
 		var arg = tag.match(/input|textarea/) ? 'value, checked' : '';
 		this._injectcombo(status, markup, output, {
-			outline: "var $name = $set(function(" + arg + ") {\n$temp;\n}, this);",
-			inline: "edbml.$run(this, \\'\' + $name + \'\\');"
+			outline:
+				'var $name = $set(function(' + arg + ') {\n$temp;\n}, this);',
+			inline: "edbml.$run(this, \\'' + $name + '\\');"
 		});
 	}
 
@@ -286,8 +289,8 @@ class Compiler {
 	 */
 	_geek(status, markup, output) {
 		this._injectcombo(status, markup, output, {
-			outline: "var $name = $set(function() {\nreturn $temp;\n}, this);",
-			inline: "edbml.$get(&quot;\' + $name + \'&quot;);"
+			outline: 'var $name = $set(function() {\nreturn $temp;\n}, this);',
+			inline: "edbml.$get(&quot;' + $name + '&quot;);"
 		});
 	}
 
@@ -304,17 +307,13 @@ class Compiler {
 			spot = status.spot,
 			prev = body.substring(0, spot),
 			next = body.substring(spot),
-			name = '$' + (++this._keycounter);
-		var outl = combo.outline.replace("$name", name).replace("$temp", temp);
+			name = '$' + ++this._keycounter;
+		var outl = combo.outline.replace('$name', name).replace('$temp', temp);
 		output.body =
-			prev + "\n" +
-			outl +
-			next +
-			combo.inline.replace("$name", name);
+			prev + '\n' + outl + next + combo.inline.replace('$name', name);
 		status.spot += outl.length + 1;
 	}
 }
-
 
 // Static ......................................................................
 

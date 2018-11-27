@@ -1,11 +1,11 @@
-"use strict";
+'use strict';
 
-var cheerio = require("cheerio");
+var cheerio = require('cheerio');
 var chalk = require('chalk');
-var compiler = require("./compiler");
-var formatter = require("./formatter");
-var assistant = require("./assistant");
-var path = require("path");
+var compiler = require('./compiler');
+var formatter = require('./formatter');
+var assistant = require('./assistant');
+var path = require('path');
 
 /**
  * Concat and minify files.
@@ -23,15 +23,14 @@ exports.process = function(grunt, files, options, macros, done) {
 			if (results.length && !errors) {
 				target = grunt.template.process(target);
 				grunt.file.write(target, results);
-				grunt.log.writeln("File " + chalk.cyan(target) + ' created.');
+				grunt.log.writeln('File ' + chalk.cyan(target) + ' created.');
 			}
 		});
 		done();
 	} else {
-		grunt.log.error("Object expected");
+		grunt.log.error('Object expected');
 	}
 };
-
 
 // Private ...............................................................................
 
@@ -62,7 +61,9 @@ function error(message) {
  * @returns {string}
  */
 function trawloutline(grunt, sources, options, macros) {
-	var js, $, results = [];
+	var js,
+		$,
+		results = [];
 	sources.forEach(function(src) {
 		$ = cheerio.load(grunt.file.read(src));
 		getscripts($, src, options).each(function(i, script) {
@@ -70,29 +71,32 @@ function trawloutline(grunt, sources, options, macros) {
 			results.push(comment(src) + formatter.beautify(js));
 		});
 	});
-	return results.join("\n\n");
+	return results.join('\n\n');
 }
 
 /**
  * @returns {$}
  */
 function getscripts($, src) {
-	var scripts = $("script");
+	var scripts = $('script');
 	if (scripts.length === 1) {
-		var name, script = $(scripts[0]);
-		if (!script.attr("id")) {
+		var name,
+			script = $(scripts[0]);
+		if (!script.attr('id')) {
 			name = path.basename(src);
 			if (validname(name)) {
-				script.attr("id", name);
+				script.attr('id', name);
 			} else {
-				error("File name unfit for declaration as a JS object: " + name);
+				error('File name unfit for declaration as a JS object: ' + name);
 			}
 		}
 	} else {
-		if (!Array.prototype.every.call(scripts, function(script) {
-			return $(script).attr("id");
-		})) {
-			error("ID required when multiples script in file: " + src);
+		if (
+			!Array.prototype.every.call(scripts, function(script) {
+				return $(script).attr('id');
+			})
+		) {
+			error('ID required when multiples script in file: ' + src);
 		}
 	}
 	return scripts;
@@ -103,7 +107,7 @@ function getscripts($, src) {
  * @returns {boolean}
  */
 function validname(name) {
-	name = name.replace(/\./g, "");
+	name = name.replace(/\./g, '');
 	return name.match(IDENTIFIER) ? true : false;
 }
 
@@ -114,7 +118,7 @@ function validname(name) {
  * @returns {string}
  */
 function parse(script, options, macros) {
-	var name = script.attr("id");
+	var name = script.attr('id');
 	var text = script.text();
 	var atts = assistant.directives(script);
 	return compile(name, text, options, macros, atts);

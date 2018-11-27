@@ -1,11 +1,10 @@
-"use strict";
+'use strict';
 
 /**
  * Script runner. Iterating strings one character at a time
  * while using advanced algorithms to look ahead and behind.
  */
 class Runner {
-
 	/**
 	 * Let's go.
 	 */
@@ -27,7 +26,7 @@ class Runner {
 	 * @param {Output} output
 	 */
 	run(compiler, script, status, markup, output) {
-		this._runlines(compiler, script.split("\n"), status, markup, output);
+		this._runlines(compiler, script.split('\n'), status, markup, output);
 		// markup.debug(); // uncomment to debug Markup.js
 	}
 
@@ -73,9 +72,8 @@ class Runner {
 	 * @returns {boolean}
 	 */
 	skipahead(string) {
-		console.error("TODO");
+		console.error('TODO');
 	}
-
 
 	// Private ...................................................................
 
@@ -109,7 +107,7 @@ class Runner {
 		line = this._line = line.trim();
 		if (line.length) {
 			compiler.newline(line, this, status, markup, output);
-			this._runchars(compiler, line.split(""), status, markup, output);
+			this._runchars(compiler, line.split(''), status, markup, output);
 			compiler.endline(line, this, status, markup, output);
 		}
 	}

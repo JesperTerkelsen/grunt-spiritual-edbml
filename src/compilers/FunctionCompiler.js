@@ -1,16 +1,14 @@
-"use strict";
+'use strict';
 
 /**
  * Function compiler.
  * @extends {Compiler}
  */
 class FunctionCompiler extends Compiler {
-
 	/**
 	 * Construction time again.
 	 */
 	constructor() {
-
 		super();
 
 		/**
@@ -92,7 +90,6 @@ class FunctionCompiler extends Compiler {
 		return new Result(source, this._params, this._instructions);
 	}
 
-
 	// Private ...................................................................
 
 	/**
@@ -112,7 +109,7 @@ class FunctionCompiler extends Compiler {
 	 */
 	_validate(script) {
 		if (FunctionCompiler._NESTEXP.test(script)) {
-			throw "Nested EDBML dysfunction";
+			throw 'Nested EDBML dysfunction';
 		}
 		return script;
 	}
@@ -132,7 +129,7 @@ class FunctionCompiler extends Compiler {
 	 * @returns {string}
 	 */
 	_extract(script) {
-		Instruction.from(script).forEach((pi) => {
+		Instruction.from(script).forEach(pi => {
 			this._instructions = this._instructions || [];
 			this._instructions.push(pi);
 			this._instruct(pi);
@@ -147,10 +144,10 @@ class FunctionCompiler extends Compiler {
 	_instruct(pi) {
 		var att = pi.att;
 		switch (pi.tag) {
-			case "param":
+			case 'param':
 				this._params.push(att.name);
 				break;
-			case "function":
+			case 'function':
 				this._functions[att.name] = att.src;
 				break;
 		}
@@ -158,7 +155,7 @@ class FunctionCompiler extends Compiler {
 
 	/**
 	 * Define stuff in head. Using var name underscore hack
-	 * to bypass the macro hygiene, will be normalized later. 
+	 * to bypass the macro hygiene, will be normalized later.
 	 * TODO: In string checks, also check for starting '('
 	 * @param {string} script
 	 * @param {object} head
@@ -168,19 +165,20 @@ class FunctionCompiler extends Compiler {
 		var head = this._head;
 		var params = this._params;
 		var functions = this._functions;
-		if (params.indexOf("out") < 0) {
-			head.out = "$edbml.$out__MACROFIX";
+		if (params.indexOf('out') < 0) {
+			head.out = '$edbml.$out__MACROFIX';
 		}
-		if(script.contains('@')) { // TODO: run macros FIRST at look for '$att' ???
+		if (script.contains('@')) {
+			// TODO: run macros FIRST at look for '$att' ???
 			head.$att__MACROFIX = '$edbml.$att__MACROFIX';
 		}
-		if(script.contains('$set')) {
+		if (script.contains('$set')) {
 			head.$set = 'edbml.$set';
 		}
-		if(script.contains('$txt')) {
+		if (script.contains('$txt')) {
 			head.$txt = 'edbml.safetext';
 		}
-		if(script.contains('$val')) {
+		if (script.contains('$val')) {
 			head.$val = 'edbml.safeattr';
 		}
 		each(functions, function(name, src) {
@@ -190,17 +188,22 @@ class FunctionCompiler extends Compiler {
 	}
 
 	/**
-	 * Inject stuff in head. Let's just hope that V8 keeps on iterating 
+	 * Inject stuff in head. Let's just hope that V8 keeps on iterating
 	 * object keys in chronological order (in which they were defined).
 	 * @param {string} script
 	 * @param {object} head
 	 * @returns {string}
 	 */
 	_injecthead(script, head) {
-		return "'use strict';\n" +
-			'var ' + each(this._head, (name, value) => {
+		return (
+			"'use strict';\n" +
+			'var ' +
+			each(this._head, (name, value) => {
 				return name + (value !== undefined ? ' = ' + value : '');
-			}).join(',') + ';' + script;
+			}).join(',') +
+			';' +
+			script
+		);
 	}
 
 	/**
@@ -219,12 +222,11 @@ class FunctionCompiler extends Compiler {
 	 * @returns {string}
 	 */
 	_source(source, params) {
-		var lines = source.split("\n");
+		var lines = source.split('\n');
 		lines.pop(); // empty line :/
-		var args = params.length ? "( " + params.join(", ") + " )" : "()";
-		return "function " + args + " {\n" + lines.join("\n") + "\n}";
+		var args = params.length ? '( ' + params.join(', ') + ' )' : '()';
+		return 'function ' + args + ' {\n' + lines.join('\n') + '\n}';
 	}
-
 }
 
 // Static ......................................................................

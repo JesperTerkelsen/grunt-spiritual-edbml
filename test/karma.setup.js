@@ -4,8 +4,8 @@
  */
 (function setup(oldstart) {
 	window.__karma__.start = function delay() {
-		document.addEventListener("DOMContentLoaded", function () {
+		document.addEventListener('DOMContentLoaded', function() {
 			setTimeout(oldstart);
 		});
 	};
-}(window.__karma__.start));
+})(window.__karma__.start);

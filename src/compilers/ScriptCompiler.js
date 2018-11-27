@@ -1,11 +1,10 @@
-"use strict";
+'use strict';
 
 /**
  * Script compiler.
  * @extends {FunctionCompiler}
  */
 class ScriptCompiler extends FunctionCompiler {
-
 	/**
 	 * Map observed types.
 	 * Add custom sequence.
@@ -15,7 +14,6 @@ class ScriptCompiler extends FunctionCompiler {
 		super();
 		this.inputs = {};
 	}
-
 
 	// Private ...................................................................
 
@@ -28,7 +26,7 @@ class ScriptCompiler extends FunctionCompiler {
 		super._instruct(pi);
 		var atts = pi.att;
 		switch (pi.tag) {
-			case "input":
+			case 'input':
 				this.inputs[atts.name] = atts.type;
 				break;
 		}
@@ -42,10 +40,13 @@ class ScriptCompiler extends FunctionCompiler {
 	 */
 	_definehead(script) {
 		script = super._definehead(script);
-		each(this.inputs, (name, type) => {
-			this._head[name] = '$edbml.$input(' + type + ')';
-		}, this);
+		each(
+			this.inputs,
+			(name, type) => {
+				this._head[name] = '$edbml.$input(' + type + ')';
+			},
+			this
+		);
 		return script;
 	}
-
 }

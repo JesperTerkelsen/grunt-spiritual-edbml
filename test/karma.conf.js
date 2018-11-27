@@ -1,5 +1,5 @@
 /*global module*/
-module.exports = function (config) {
+module.exports = function(config) {
 	'use strict';
 	var pack = require('../package.json');
 	console.log('../dist/spiritual-gui-' + pack.version + '.js');
@@ -7,7 +7,7 @@ module.exports = function (config) {
 		frameworks: ['jasmine'],
 		files: [
 			'karma.setup.js',
-			'build/**/*.js',
+			'build/**/*.js'
 			//{pattern: 'xxx', included: false}
 		],
 		browsers: ['Chrome'],

@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /**
  * EDB processing instruction.
@@ -6,14 +6,14 @@
  * @param {string} pi
  */
 class Instruction {
-
 	/**
 	 * @param {string} pi
 	 */
 	constructor(pi) {
-		this.tag = pi.split("<?")[1].split(" ")[0];
+		this.tag = pi.split('<?')[1].split(' ')[0];
 		this.att = Object.create(null);
-		var hit, atexp = Instruction._ATEXP;
+		var hit,
+			atexp = Instruction._ATEXP;
 		while ((hit = atexp.exec(pi))) {
 			var n = hit[1],
 				v = hit[2];
@@ -21,7 +21,6 @@ class Instruction {
 		}
 	}
 }
-
 
 // Static ......................................................................
 
@@ -45,7 +44,7 @@ Instruction.from = function(source) {
  * @returns {string}
  */
 Instruction.clean = function(source) {
-	return source.replace(this._PIEXP, "");
+	return source.replace(this._PIEXP, '');
 };
 
 /**

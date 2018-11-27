@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /**
  * @param {string} source
@@ -8,7 +8,7 @@
  * @returns {string}
  */
 exports.compile = function(edbml, options, macros, directives) {
-	if (edbml.contains("<?input")) {
+	if (edbml.contains('<?input')) {
 		return new ScriptCompiler().compile(edbml, options, macros, directives);
 	} else {
 		return new FunctionCompiler().compile(edbml, options, macros, directives);
